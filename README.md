@@ -11,6 +11,7 @@ AI 코딩 도구(Claude Code)를 활용해 기획부터 데이터 처리, 화면
 |---|---|---|
 | 판매추이 예측 · 리오더 판단 보드 | [열기](https://hkyeng0911-png.github.io/md-portfolio/sales-trend-reorder/) | 네이버 데이터랩 지수로 복종별 추세를 예측하고, 리오더 수량과 할인율별 손익분기점을 계산 |
 | 시즌 상품 매니저 의견 취합 결과 페이지 | [열기](https://hkyeng0911-png.github.io/md-portfolio/survey-result-demo/public/) | 전국 매장 매니저의 신상품 반응을 모아 품번별·복종별·매장등급별로 보여주는 공유 페이지 |
+| 아울렛 전용 상품 수요조사 결과 페이지 | [열기](https://hkyeng0911-png.github.io/md-portfolio/outlet-survey-demo/public/) | 아울렛 매장 매니저에게 전용 데님·기본 이너에 필요한 사양을 묻고, 문항별 분포와 요약을 보여주는 페이지 |
 
 ---
 
@@ -56,6 +57,21 @@ cd survey-result-demo
 python make_demo_data.py
 python build.py
 ```
+
+## 3. 아울렛 전용 상품 수요조사 결과 페이지
+
+![아울렛 수요조사 결과](docs/outlet.jpg)
+
+**왜 만들었나** — 아울렛 전용 저가 데님과 기본 이너를 기획하기 전에, 실제로 아울렛에서 어떤 핏·컬러·가격대가 팔리는지 매장 의견을 빠르게 모아야 했습니다.
+
+**무엇을 하나**
+- 대상 매장 매니저가 모바일로 답하는 설문(단일·복수 선택, 조건부 문항, 자유의견)을 만들고, 결과를 문항별 분포로 보여줍니다.
+- 매장 그룹(신상 입고 / 미입고)별 진행 현황, 문항별 최다 응답 강조, 자유의견 모음, CSV 내려받기를 제공합니다.
+- 응답과 자유의견을 묶어 기획 회의용 요약을 맨 위에 붙였습니다. (시연판의 요약은 가상 응답을 집계해 자동으로 만든 문장)
+
+**파일**
+- `make_demo.py` — 가상 매장 10곳·응답 생성 → `public/index.html`, `public/outlet_survey_result.csv`
+- `template.html` — 결과 페이지 화면
 
 ---
 

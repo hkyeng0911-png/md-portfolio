@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>아울렛 전용 상품 수요조사 (시연) · 결과</title>
+<style>
+  :root { --bg:#f8f9fa; --surface:#fff; --ink:#202124; --sub:#5f6368; --faint:#80868b; --line:#e8eaed; --hover:#f1f3f4; --blue:#1a73e8; --blue-ink:#fff; --blue-soft:#e8f0fe; --green:#188038; --green-soft:#e6f4ea; --red:#d93025; --amber:#b06000; --amber-soft:#fef7e0; --a:#1a73e8; --b:#f9ab00; --top:#f7b27a; --top-ink:#b5581c; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#121212; --surface:#1e1f20; --ink:#e8eaed; --sub:#bdc1c6; --faint:#9aa0a6; --line:#3c4043; --hover:#2a2b2d; --blue:#8ab4f8; --blue-ink:#0b2a52; --blue-soft:#263951; --green:#81c995; --green-soft:#1e3a28; --red:#f28b82; --amber:#fdd663; --amber-soft:#3b3320; --a:#8ab4f8; --b:#fdd663; --top:#f3a86a; --top-ink:#ffc99a; } }
+  * { box-sizing:border-box; } [hidden] { display:none !important; } button { font:inherit; color:inherit; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"Google Sans","Noto Sans KR","Segoe UI",-apple-system,"Malgun Gothic",sans-serif; line-height:1.5; }
+  .top { position:sticky; top:0; z-index:10; background:var(--surface); border-bottom:1px solid var(--line); } .top .in { max-width:1000px; margin:0 auto; padding:0 16px; height:56px; display:flex; align-items:center; gap:12px; }
+  .top h1 { font-size:16px; margin:0; flex:1; font-weight:600; } .top small { color:var(--faint); font-weight:400; font-size:12px; margin-left:8px; }
+  .btn { height:34px; padding:0 14px; border-radius:17px; border:1px solid var(--line); background:var(--surface); font-size:13px; cursor:pointer; text-decoration:none; color:var(--ink); display:inline-flex; align-items:center; }
+  .wrap { max-width:1000px; margin:0 auto; padding:20px 16px 80px; }
+  .kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; } .card { background:var(--surface); border:1px solid var(--line); border-radius:14px; }
+  .kpi { padding:14px 16px; } .kpi .l { font-size:12px; color:var(--sub); } .kpi .v { font-size:26px; font-weight:600; margin-top:2px; } .kpi .d { font-size:12px; color:var(--faint); }
+  .legend { display:flex; gap:14px; font-size:13px; color:var(--sub); margin:0 0 12px; } .legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; }
+  .sec { margin:26px 0 10px; font-size:15px; font-weight:600; }
+  .q { padding:14px 16px; margin-bottom:12px; } .q h3 { font-size:14px; margin:0 0 10px; } .q h3 span { color:var(--faint); font-weight:400; font-size:12px; margin-left:6px; }
+  .row { display:grid; grid-template-columns:150px 1fr 90px; gap:10px; align-items:center; font-size:13px; padding:4px 0; } .row .lbl { color:var(--sub); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bars { display:flex; flex-direction:column; gap:3px; } .bar { height:9px; border-radius:4px; background:var(--line); overflow:hidden; } .bar i { display:block; height:100%; border-radius:4px; } .bar.a i { background:var(--a); } .bar.b i { background:var(--b); }
+  .row .n { text-align:right; font-variant-numeric:tabular-nums; color:var(--sub); } .row .n b { color:var(--ink); }
+  .top1 { background:color-mix(in srgb,var(--top) 18%,transparent); border-radius:8px; } .top1 .bar i { background:var(--top) !important; } .top1 .lbl { color:var(--top-ink); font-weight:700; } .top1 .n b { color:var(--top-ink); }
+  .sum { padding:14px 16px; margin-bottom:20px; } .sum h2 { font-size:15px; margin:0 0 10px; } .sum table { width:100%; border-collapse:collapse; font-size:13px; } .sum th { text-align:left; color:var(--faint); font-weight:500; font-size:12px; padding:4px 6px; border-bottom:1px solid var(--line); } .sum td { padding:6px; border-bottom:1px solid var(--line); vertical-align:top; } .sum tr:last-child td { border-bottom:0; } .sum .t1 { color:var(--top-ink); font-weight:700; } .sum .qid { color:var(--faint); font-size:12px; margin-right:4px; } .sum .pct { color:var(--faint); font-size:12px; }
+  .sum .bp { margin:6px 0; font-size:15px; line-height:1.7; } .sum .bh { color:var(--top-ink); margin-right:4px; } .sum .bsub { font-size:12px; color:var(--faint); margin:6px 0 2px 14px; } .sum .bl { margin:0 0 6px 14px; padding-left:16px; font-size:13.5px; } .sum .bl li { margin:3px 0; }
+  .txt { border-top:1px solid var(--line); padding:8px 0; font-size:14px; } .txt:first-of-type { border-top:0; } .txt .m { font-size:12px; color:var(--faint); } .txt .m b { color:var(--ink); } .tag { display:inline-block; font-size:11px; padding:1px 8px; border-radius:10px; margin-right:6px; color:#fff; } .tag.a { background:var(--a); } .tag.b { background:var(--b); color:#202124; }
+  .st { display:grid; grid-template-columns:1fr 110px 1fr 120px; gap:10px; padding:9px 16px; border-top:1px solid var(--line); font-size:13px; } .st:first-child { border-top:0; } .sbg { font-size:11px; font-weight:600; padding:1px 8px; border-radius:10px; } .sbg.done { background:var(--green-soft); color:var(--green); } .sbg.mid { background:var(--amber-soft); color:var(--amber); } .sbg.new { background:var(--hover); color:var(--faint); }
+  #login { max-width:340px; margin:20vh auto; text-align:center; padding:0 16px; } #login input { width:100%; height:48px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); padding:0 14px; font-size:16px; margin:14px 0 10px; } #login .go { width:100%; height:46px; border:0; border-radius:23px; background:var(--blue); color:var(--blue-ink); font-size:15px; font-weight:600; cursor:pointer; } #err { color:var(--red); font-size:13px; min-height:18px; margin-top:8px; }
+  .empty { color:var(--faint); font-size:13px; }
+  @media (max-width:640px) { .kpis { grid-template-columns:1fr; } .row { grid-template-columns:1fr 60px; } .row .bars { grid-column:1 / -1; } .st { grid-template-columns:1fr 1fr; } }
+</style>
+<style>.note { font-size:12px; color:var(--faint); margin:-8px 0 16px; }</style>
+</head>
+<body>
+<div id="app">
+  <header class="top"><div class="in"><h1>아울렛 전용 상품 수요조사 (시연) · 결과<small id="upd"></small></h1><a class="btn" href="outlet_survey_result.csv" download>CSV 내려받기</a></div></header>
+  <main class="wrap">
+    <div class="note">[시연용 가상 데이터] 아울렛 10개점(신상입고매장 5 · 신상미입고매장 5) 매니저 대상 · 아울렛 전용 저가 데님·기본 이너 기획 참고용 · 응답자 이름은 제외했습니다.</div>
+    <div class="kpis"><div class="card kpi"><div class="l">완료 매장</div><div class="v" id="k1">–</div><div class="d" id="k1d"></div></div><div class="card kpi"><div class="l">신상입고매장 완료</div><div class="v" id="k2">–</div><div class="d">/ 5개점</div></div><div class="card kpi"><div class="l">신상미입고매장 완료</div><div class="v" id="k3">–</div><div class="d">/ 5개점</div></div></div>
+    <div class="card sum" id="sum"></div>
+    <div class="legend"><span>10개점 합산 · 매장당 1명 응답 · 복수선택은 선택 수 합계, %는 응답 매장 대비</span><span style="margin-left:auto;color:var(--top-ink);font-weight:600">■ 주황색 = 최다 응답</span></div>
+    <div id="res"></div>
+    <div class="sec">매장별 응답 현황</div><div class="card" id="stores"></div>
+  </main>
+</div>
+<script>
+const D = /*DATA*/;
+const $ = id => document.getElementById(id); const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const G = ['신상입고매장', '신상미입고매장'], cls = g => g === G[0] ? 'a' : 'b';
+// 요약 텍스트: "# " 줄 = 소제목, "- " 줄 = 하위 항목, 그 외 = 문단
+function fmtSummary(t) {
+  let h = '', ul = [];
+  const flush = () => { if (ul.length) { h += `<ul class="bl">${ul.join('')}</ul>`; ul = []; } };
+  for (const raw of t.split('\n')) { const x = raw.trim(); if (!x) continue;
+    if (x.startsWith('# ')) { flush(); h += `<p class="bp"><span class="bh">■</span><b>${esc(x.slice(2))}</b></p>`; }
+    else if (x.startsWith('- ')) ul.push(`<li>${esc(x.slice(2))}</li>`);
+    else { flush(); h += `<p class="bp">${esc(x)}</p>`; } }
+  flush(); return h;
+}
+const answeredQ = (r, q) => { const v = r.answers[q.id]; return Array.isArray(v) ? v.length > 0 : v != null && v !== ''; };
+$('upd').textContent = D.now.slice(0, 16) + ' 기준';
+const latest = {}; for (const r of D.responses) if (!latest[r.store_code] || r.updated_at > latest[r.store_code].updated_at) latest[r.store_code] = r;
+const R = Object.values(latest), done = R.filter(r => r.complete);
+$('k1').textContent = `${done.length} / ${D.stores.length}`; $('k1d').textContent = `작성 중 ${R.length - done.length}`;
+$('k2').textContent = done.filter(r => r.grp === G[0]).length; $('k3').textContent = done.filter(r => r.grp === G[1]).length;
+const nTxt = R.reduce((a, r) => a + D.questions.filter(q => q.type === 'text' && (r.answers[q.id] || '').trim()).length, 0);
+$('sum').innerHTML = D.summary ? `<h2>요약 <span class="pct" style="font-weight:400">매장 자유의견 ${nTxt}건${D.summary_at ? ' · ' + D.summary_at + ' 작성' : ''}</span></h2><div class="slines">${fmtSummary(D.summary)}</div>` : '';
+$('res').innerHTML = D.sections.map(sec => `<div class="sec">${esc(sec.title)}</div>` + D.questions.filter(q => q.sec === sec.id).map(q => {
+  if (q.type === 'text') { const xs = R.filter(r => (r.answers[q.id] || '').trim()); return `<div class="card q"><h3>${esc(q.id)}. ${esc(q.q)}<span>${xs.length}건</span></h3>${xs.length ? xs.map(r => `<div class="txt"><div class="m"><span class="tag ${cls(r.grp)}">${esc(r.grp)}</span><b>${esc(r.store_name)}</b></div>${esc(r.answers[q.id])}</div>`).join('') : '<div class="empty">의견 없음</div>'}</div>`; }
+  const n = R.filter(r => answeredQ(r, q)).length;
+  const cnt = q.opts.map(o => ({ o, c: R.filter(r => [].concat(r.answers[q.id] || []).includes(o)).length }));
+  const max = Math.max(1, ...cnt.map(c => c.c)), top = Math.max(...cnt.map(c => c.c));
+  return `<div class="card q"><h3>${esc(q.id)}. ${esc(q.q)}<span>응답 ${n}매장</span></h3>${cnt.map(c => `<div class="row ${c.c && c.c === top ? 'top1' : ''}"><span class="lbl">${esc(c.o)}</span><div class="bars"><div class="bar a"><i style="width:${c.c / max * 100}%"></i></div></div><span class="n"><b>${c.c}</b>${n ? ` <span style="color:var(--faint)">${Math.round(c.c / n * 100)}%</span>` : ''}</span></div>`).join('')}</div>`;
+}).join('')).join('');
+$('stores').innerHTML = D.stores.map(s => { const r = latest[s.code], st = r ? (r.complete ? 'done' : 'mid') : 'new';
+  return `<div class="st"><span><span class="tag ${cls(s.group)}">${esc(s.group)}</span>${esc(s.name)}</span><span class="sbg ${st}">${{ done:'완료', mid:'작성 중', new:'미작성' }[st]}</span><span></span><span class="empty">${r ? esc(r.updated_at.slice(5, 16)) : ''}</span></div>`; }).join('');
+</script>
+</body>
+</html>

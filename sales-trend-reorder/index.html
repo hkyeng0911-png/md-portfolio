@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>판매추이·리오더 보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 왼쪽 입력 패널(데스크톱에서 고정) + 오른쪽 결과. 판정 → 할인율표 → 리오더 → 다품번 순으로 요약에서 상세로. */
+:root {
+  --bg: #F3F5F8; --surface: #FFFFFF; --ink: #1A2130; --muted: #5A6476; --line: #DCE1E9;
+  --accent: #2E4A86; --accent-soft: #E4EAF6; --good: #1D7A52; --good-soft: #E1F2E9;
+  --warn: #A86A12; --warn-soft: #FBF0DC; --bad: #B23A3A; --bad-soft: #F8E3E3; --bar: #A9B9D9;
+  --f-body: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "Consolas", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10141B; --surface: #171E2B; --ink: #E5E9F0; --muted: #98A2B5; --line: #283246;
+  --accent: #91AAE6; --accent-soft: #212E4A; --good: #52C28D; --good-soft: #17322A;
+  --warn: #E2AE52; --warn-soft: #3A2E17; --bad: #EE7D7D; --bad-soft: #3A1E22; --bar: #3E5384; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #10141B; --surface: #171E2B; --ink: #E5E9F0; --muted: #98A2B5; --line: #283246;
+  --accent: #91AAE6; --accent-soft: #212E4A; --good: #52C28D; --good-soft: #17322A;
+  --warn: #E2AE52; --warn-soft: #3A2E17; --bad: #EE7D7D; --bad-soft: #3A1E22; --bar: #3E5384; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px }
+.wrap { max-width: 1320px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px }
+h1 { font-size: 1.55rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; text-wrap: balance }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 70ch }
+.layout { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 18px; align-items: start }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr) } }
+aside { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 14px;
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto }
+@media (max-width: 900px) { aside { position: static; max-height: none } }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px }
+legend { grid-column: 1 / -1; font-weight: 600; font-size: .78rem; letter-spacing: .06em; color: var(--accent); margin-bottom: 6px; padding: 0 }
+label { display: flex; flex-direction: column; gap: 3px; font-size: .78rem; color: var(--muted); min-width: 0 }
+label.full { grid-column: 1 / -1 }
+input, select, textarea { font: 500 .9rem var(--f-num); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; min-width: 0 }
+select { font-family: var(--f-body) }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px }
+.hint { grid-column: 1 / -1; font-size: .72rem; color: var(--muted); margin: -2px 0 0 }
+main { display: flex; flex-direction: column; gap: 18px; min-width: 0 }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; min-width: 0 }
+.card h2 { font-size: 1.02rem; margin: 0 0 4px; font-weight: 700 }
+.card .desc { color: var(--muted); font-size: .82rem; margin: 0 0 12px }
+.verdict { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr); gap: 18px; align-items: center }
+@media (max-width: 700px) { .verdict { grid-template-columns: minmax(0, 1fr) } }
+.pill { display: inline-block; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; letter-spacing: .03em }
+.pill.good { background: var(--good-soft); color: var(--good) } .pill.warn { background: var(--warn-soft); color: var(--warn) }
+.pill.bad { background: var(--bad-soft); color: var(--bad) } .pill.info { background: var(--accent-soft); color: var(--accent) }
+.big { font-size: 1.45rem; font-weight: 700; margin: 8px 0 4px; text-wrap: balance }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px }
+.kpi { border-left: 3px solid var(--line); padding: 2px 0 2px 10px }
+.kpi b { display: block; font: 600 1.15rem var(--f-num); font-variant-numeric: tabular-nums }
+.kpi span { font-size: .74rem; color: var(--muted) }
+.tbl { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font-size: .82rem; font-variant-numeric: tabular-nums }
+th { text-align: right; font-weight: 600; color: var(--muted); font-size: .74rem; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap }
+td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--line); font-family: var(--f-num); white-space: nowrap }
+th:first-child, td:first-child { text-align: left }
+td.t { font-family: var(--f-body) }
+tr.best td { background: var(--accent-soft) }
+tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--accent) }
+tbody tr { cursor: pointer }
+.pos { color: var(--good) } .neg { color: var(--bad) }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px }
+@media (max-width: 1050px) { .grid2 { grid-template-columns: minmax(0, 1fr) } }
+svg { display: block; width: 100%; height: auto }
+svg text { fill: var(--muted); font: 11px var(--f-body) }
+.axis { stroke: var(--line) }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px }
+.fact { background: var(--bg); border-radius: 8px; padding: 10px 12px }
+.fact b { display: block; font: 600 1.05rem var(--f-num) }
+.fact span { font-size: .74rem; color: var(--muted) }
+button { font: 600 .82rem var(--f-body); background: var(--accent); color: var(--surface); border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer }
+button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent) }
+textarea { font-size: .78rem; min-height: 130px; resize: vertical; line-height: 1.45 }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.note { font-size: .76rem; color: var(--muted); margin: 10px 0 0 }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .74rem; color: var(--muted); margin-top: 6px }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px }
+@media (prefers-reduced-motion: no-preference) { tbody tr td { transition: background .15s } }
+[hidden] { display: none !important }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto }
+.tab { background: transparent; color: var(--muted); border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 10px 14px; font-size: .92rem; white-space: nowrap }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent) }
+.tab small { font-weight: 500; font-size: .72rem; margin-left: 4px; color: var(--muted) }
+@media (max-width: 520px) { .tab small { display: none } .tab { padding: 10px 10px } }
+.panel { display: flex; flex-direction: column; gap: 18px }
+.ctrl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 16px; align-items: center }
+@media (max-width: 900px) { .ctrl { grid-template-columns: minmax(0, 1fr) } }
+.ctrl-in { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end }
+input[type="file"] { font: .74rem var(--f-body); padding: 5px }
+input[type="range"] { padding: 0; accent-color: var(--accent); background: transparent; border: 0 }
+.minis { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px }
+.mini { background: var(--bg); color: var(--ink); border: 1px solid transparent; border-radius: 8px; padding: 8px 10px 4px; text-align: left; font: inherit; cursor: pointer }
+.mini[aria-pressed="true"] { border-color: var(--accent) }
+.mini .mt { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-weight: 600; font-size: .86rem }
+.banner { background: var(--accent-soft); border-radius: 8px; padding: 10px 14px; font-size: .84rem; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between }
+.reorder-top { justify-content: space-between; align-items: end; margin-bottom: 14px }
+details.card summary { cursor: pointer; font-weight: 700 }
+details.card ol { margin: 10px 0 0; padding-left: 20px; color: var(--muted); font-size: .84rem }
+details.card li { margin-bottom: 6px }
+#tab-reorder > .layout { margin-top: 0 }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>기획MD 판매추이·리오더 보드</h1>
+      <p class="sub">① 네이버 데이터랩 지수로 복종별 판매추이를 예측하고, ② 그 추세를 품번의 리오더·가격인하 판단에 바로 넣습니다.</p>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="보드 선택">
+    <button type="button" class="tab" role="tab" id="tb-trend" aria-controls="tab-trend" aria-selected="true">① 복종별 판매추이<small>네이버 데이터랩</small></button>
+    <button type="button" class="tab" role="tab" id="tb-reorder" aria-controls="tab-reorder" aria-selected="false" tabindex="-1">② 리오더·가격인하 판단</button>
+  </nav>
+
+  <section id="tab-trend" class="panel" role="tabpanel" aria-labelledby="tb-trend">
+    <section class="card">
+      <div class="ctrl">
+        <div>
+          <span id="t-pill" class="pill warn">가상 데이터</span>
+          <p class="big" id="t-src" style="font-size:1.1rem">—</p>
+          <p class="desc" id="t-meta" style="margin:0">—</p>
+        </div>
+        <div class="ctrl-in">
+          <label for="f-index">지수 데이터 올리기<input id="f-index" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt"><span>Colab 결과 엑셀 · 데이터랩 다운로드 · CSV</span></label>
+          <label for="f-sales">판매수량 올리기 (선택)<input id="f-sales" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt"><span>열: 주차, 복종, 판매수량</span></label>
+          <label for="t-h">예측 기간 <output id="t-h-out" for="t-h">16주</output><input id="t-h" type="range" min="4" max="26" step="1" value="16"></label>
+          <button type="button" class="ghost" id="t-demo">가상 데이터로 보기</button>
+        </div>
+      </div>
+      <p class="note" id="t-msg" role="status" aria-live="polite"></p>
+      <div class="kpis" id="t-kpis" style="margin-top:12px"></div>
+    </section>
+
+    <section class="card">
+      <h2>복종별 추세 요약</h2>
+      <p class="desc">최근 대비 변화가 큰 순서입니다. 행을 누르면 아래 상세 그래프가 바뀝니다. 검증오차가 단순예측 오차보다 작아야 계절 패턴 예측을 믿을 수 있습니다(크면 빨간색).</p>
+      <div class="tbl"><table id="t-table"><thead><tr>
+        <th>복종</th><th>추세</th><th>최근 4주<br>지수</th><th>전년 동기<br>대비</th><th id="t-h-th">향후 16주<br>평균 지수</th><th>최근 대비<br>변화</th><th>주평균<br>변화율</th><th>예측 피크</th><th>검증오차</th><th>단순예측<br>오차</th><th>판매연계<br>R²</th><th>예측 판매<br>(장)</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section class="card">
+      <div class="row" style="justify-content:space-between;align-items:start">
+        <div style="flex:1 1 360px"><h2 id="t-d-title">—</h2><p class="desc" id="t-d-desc" style="margin:0">—</p></div>
+        <button type="button" id="t-apply">이 변화율로 리오더 판단하기 →</button>
+      </div>
+      <div class="facts" id="t-facts" style="margin-top:12px"></div>
+      <div id="t-chart"></div>
+      <div class="legend" id="t-legend"></div>
+    </section>
+
+    <section class="card">
+      <h2>전체 복종 한눈에 보기</h2>
+      <p class="desc">최근 1년 실적(실선)과 예측(점선). 누르면 위 상세 그래프로 바뀝니다.</p>
+      <div class="minis" id="t-minis"></div>
+    </section>
+
+    <details class="card">
+      <summary>데이터 준비 방법</summary>
+      <ol>
+        <li><b>Colab 코드로 수집(권장)</b> — <code>colab_복종별_판매추이예측.py</code>에 네이버 API 키를 넣어 실행하고, 내려받은 <code>복종별_판매추이예측.xlsx</code>를 그대로 올리세요. '지수실적' 시트를 읽어 이 화면에서 다시 예측합니다.</li>
+        <li><b>데이터랩 웹에서 직접</b> — datalab.naver.com 검색어트렌드·쇼핑인사이트에서 기간 단위를 '주간'으로 조회하고 엑셀로 내려받아 올리세요. 날짜 열과 키워드 열이 있는 표는 자동으로 인식합니다.</li>
+        <li><b>직접 만든 표</b> — 첫 열 주차(날짜), 다음 열부터 복종별 지수인 CSV·엑셀.</li>
+        <li><b>판매수량(선택)</b> — 열 이름 <code>주차, 복종, 판매수량</code>. 복종 이름이 지수 데이터와 같아야 연결됩니다. 연결되면 지수로 판매량을 추정한 R²와 예측 판매수량이 나옵니다.</li>
+        <li>네이버 API는 키가 드러나지 않도록 서버(Colab)에서 호출해야 해서, 이 화면은 수집된 결과를 올려 보는 방식입니다. 올린 파일은 이 브라우저 안에서만 처리되고 어디로도 전송·저장되지 않습니다.</li>
+      </ol>
+    </details>
+  </section>
+
+  <div id="tab-reorder" role="tabpanel" aria-labelledby="tb-reorder" hidden>
+    <div class="row reorder-top">
+      <p class="sub" style="margin:0;flex:1 1 360px">품번의 가격·원가·판매 현황을 넣으면 할인율별 손익분기점, 남은 시즌 기대이익, 리오더 여부와 수량을 바로 계산합니다. 처음 값은 예시 품번입니다.</p>
+      <label for="preset" style="min-width:200px">예시 품번 불러오기
+        <select id="preset">
+          <option value="coat">예시 · 여성 울 핸드메이드 코트</option>
+          <option value="knit">예시 · 캐시미어 혼방 니트</option>
+          <option value="blouse">예시 · 실크 블라우스 (시즌 말)</option>
+        </select>
+      </label>
+    </div>
+    <div id="link-banner" class="banner" hidden style="margin-bottom:14px"></div>
+
+  <div class="layout">
+    <aside aria-label="입력">
+      <fieldset>
+        <legend>가격 · 원가</legend>
+        <label for="tag">정상가 (TAG, VAT 포함)<input id="tag" type="number" step="1000"></label>
+        <label for="cost">원가 (초도, 장당)<input id="cost" type="number" step="500"></label>
+        <label for="rcost">리오더 원가 (장당)<input id="rcost" type="number" step="500"></label>
+        <label for="comm">유통수수료율 %<input id="comm" type="number" step="0.5"></label>
+        <label for="varc" class="full">중간관리수수료 + 기타 변동비율 % (VAT 제외 매출 대비)<input id="varc" type="number" step="0.5"></label>
+      </fieldset>
+      <fieldset>
+        <legend>판매 현황</legend>
+        <label for="initq">입고수량 (장)<input id="initq" type="number" step="10"></label>
+        <label for="sold">누적 판매 (장)<input id="sold" type="number" step="10"></label>
+        <label for="vel">최근 4주 주평균 판매<input id="vel" type="number" step="1"></label>
+        <label for="weeks">남은 시즌 (주)<input id="weeks" type="number" step="1" min="1" max="52"></label>
+        <label for="growth" class="full">주간 판매 변화율 % (시즌 후반 감소는 −)<input id="growth" type="number" step="0.5"></label>
+        <p class="hint">네이버 데이터랩 예측 코드의 '주평균 변화율'을 그대로 넣으면 검색 추세가 반영됩니다.</p>
+      </fieldset>
+      <fieldset>
+        <legend>리오더 조건</legend>
+        <label for="lead">리드타임 (주)<input id="lead" type="number" step="1" min="0"></label>
+        <label for="moq">MOQ (장)<input id="moq" type="number" step="10" min="0"></label>
+        <label for="fixed">리오더 고정비 (원)<input id="fixed" type="number" step="100000"></label>
+        <label for="cv">수요 불확실성 %<input id="cv" type="number" step="5" min="0"></label>
+        <p class="hint">수요 불확실성: 예측 판매량이 평균적으로 몇 % 빗나가는지 (보통 20~40%).</p>
+      </fieldset>
+      <fieldset>
+        <legend>가격인하 가정</legend>
+        <label for="elas">할인 탄력성<input id="elas" type="number" step="0.1" min="0"></label>
+        <label for="salv">시즌 후 회수율 % (원가 대비)<input id="salv" type="number" step="5" min="0"></label>
+        <p class="hint">탄력성 2.0 = 20% 인하 시 판매속도 약 1.56배((1−할인율)^−탄력성). 과거 행사 실적으로 맞추세요. 회수율: 남은 재고를 이월·아울렛으로 처분해 원가의 몇 %를 돌려받는지.</p>
+      </fieldset>
+    </aside>
+
+    <main>
+      <section class="card" aria-labelledby="v-h">
+        <div class="verdict">
+          <div>
+            <span id="v-pill" class="pill info">계산 중</span>
+            <p class="big" id="v-head" role="status">—</p>
+            <p class="desc" id="v-body" style="margin:0">—</p>
+          </div>
+          <div class="kpis" id="kpis"></div>
+        </div>
+        <h2 id="v-h" hidden>판정</h2>
+      </section>
+
+      <section class="card">
+        <h2>할인율별 손익분기점과 남은 시즌 기대이익</h2>
+        <p class="desc">각 할인율마다 최적 리오더 수량을 함께 계산했습니다. 행을 누르면 아래 리오더 분석이 그 할인율로 바뀝니다. 파란 행이 기대이익 최대입니다.</p>
+        <div class="tbl"><table id="dtable">
+          <thead><tr>
+            <th>할인율</th><th>판매가</th><th>장당 순매출</th><th>장당 이익(원가 차감)</th><th>마진율</th>
+            <th>손익분기<br>판매증가율</th><th>예상<br>판매증가율</th><th>판정</th><th>최적 리오더</th><th>예상 판매</th><th>시즌말 재고</th><th>시즌말 판매율</th><th>남은 시즌 기대이익</th>
+          </tr></thead><tbody></tbody></table></div>
+        <p class="note" id="bep-note"></p>
+        <div id="chart-d" style="margin-top:10px"></div>
+      </section>
+
+      <section class="card">
+        <h2 id="r-title">리오더 수량 결정</h2>
+        <p class="desc" id="r-desc"></p>
+        <div class="facts" id="rfacts"></div>
+        <div class="grid2">
+          <div>
+            <p class="desc" style="margin:0 0 4px"><b>리오더 수량별 기대이익</b> · 점선 = MOQ, 점 = 추천 수량</p>
+            <div id="chart-q"></div>
+          </div>
+          <div>
+            <p class="desc" style="margin:0 0 4px"><b>주차별 판매·재고 전망</b> (추천안 기준, 평균 수요)</p>
+            <div id="chart-w"></div>
+            <div class="legend"><span><i style="background:var(--bar)"></i>예상 판매</span><span><i style="background:var(--accent)"></i>재고</span><span><i style="background:var(--warn)"></i>리오더 입고</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>다품번 일괄 판단</h2>
+        <p class="desc">엑셀에서 아래 열 순서대로 복사해 붙여넣으세요(첫 줄 머리글). 수수료·탄력성·회수율·불확실성·주간 변화율은 왼쪽 값을 공통으로 씁니다. 처음 내용은 예시입니다.</p>
+        <label for="batch" class="full">품번, 정상가, 원가, 리오더원가, 입고, 누적판매, 주평균판매, 남은주, 리드타임, MOQ, 리오더고정비
+          <textarea id="batch" spellcheck="false"></textarea></label>
+        <div class="row" style="margin-top:8px"><button id="run-batch" type="button">일괄 계산</button><button id="copy-batch" type="button" class="ghost">결과 복사 (엑셀 붙여넣기용)</button><span id="copy-msg" class="note" style="margin:0"></span></div>
+        <div class="tbl" style="margin-top:12px"><table id="btable"><thead><tr>
+          <th>품번</th><th>판매율</th><th>재고 소진(주)</th><th>추천 할인율</th><th>추천 리오더</th><th>예상 판매</th><th>시즌말 판매율</th><th>남은 시즌 기대이익</th><th>현 상태 유지 대비</th><th>판정</th>
+        </tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <p class="note">계산 방식 — 주차별 수요 = 최근 주평균 판매 × (1+주간 변화율)^주차 × (1−할인율)^−탄력성. 리오더는 리드타임 이후 수요에만 쓰입니다. 예상 판매는 수요를 정규분포(평균, 평균×불확실성)로 보고 재고 한도 내 기대판매량을 계산합니다. 기대이익 = 예상 판매 × 장당 순매출 + 시즌말 재고 × 원가 × 회수율 − 리오더 수량 × 리오더 원가 − 리오더 고정비. 이미 입고된 재고의 원가는 어떤 선택을 해도 같으므로 비교에서 뺐고, '시즌 전체 손익'에만 넣었습니다. 장당 순매출 = 판매가 ÷ 1.1 × (1 − 수수료율 − 기타 변동비율).</p>
+    </main>
+  </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var DISCOUNTS = [0, 0.1, 0.2, 0.3, 0.4, 0.5];
+  var PRESETS = {
+    coat: { tag: 398000, cost: 98000, rcost: 105000, comm: 32, varc: 3, initq: 800, sold: 520, vel: 60, weeks: 12, growth: -4, lead: 4, moq: 150, fixed: 2000000, cv: 30, elas: 2.0, salv: 40 },
+    knit: { tag: 189000, cost: 52000, rcost: 56000, comm: 32, varc: 3, initq: 1200, sold: 540, vel: 45, weeks: 10, growth: -3, lead: 3, moq: 200, fixed: 1500000, cv: 30, elas: 2.2, salv: 40 },
+    blouse: { tag: 229000, cost: 61000, rcost: 66000, comm: 32, varc: 3, initq: 900, sold: 380, vel: 22, weeks: 6, growth: -8, lead: 4, moq: 200, fixed: 1200000, cv: 35, elas: 2.4, salv: 35 }
+  };
+  var BATCH_SAMPLE = [
+    "품번,정상가,원가,리오더원가,입고,누적판매,주평균판매,남은주,리드타임,MOQ,리오더고정비",
+    "예시-CT101,398000,98000,105000,800,520,60,12,4,150,2000000",
+    "예시-KN205,189000,52000,56000,1200,540,45,10,3,200,1500000",
+    "예시-BL310,229000,61000,66000,900,380,22,6,4,200,1200000",
+    "예시-JK122,329000,84000,90000,600,510,48,10,4,100,1800000",
+    "예시-PT407,159000,39000,42000,1500,610,38,10,3,300,1000000"
+  ].join("\n");
+  var IDS = ["tag", "cost", "rcost", "comm", "varc", "initq", "sold", "vel", "weeks", "growth", "lead", "moq", "fixed", "cv", "elas", "salv"];
+  var $ = function (id) { return document.getElementById(id); };
+  var selD = null;
+
+  var won = function (v) { return Math.round(v).toLocaleString("ko-KR"); };
+  var man = function (v) { return (v / 10000).toLocaleString("ko-KR", { maximumFractionDigits: 0 }) + "만"; };
+  var pct = function (v, d) { return (v * 100).toFixed(d == null ? 1 : d) + "%"; };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+
+  // 표준정규 pdf/cdf, 기대판매량 E[min(D, S)]
+  function phi(z) { return Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI); }
+  function Phi(z) {
+    var t = 1 / (1 + 0.2316419 * Math.abs(z));
+    var p = phi(z) * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+    return z >= 0 ? 1 - p : p;
+  }
+  function expSales(mu, sd, stock) {
+    if (stock <= 0 || mu <= 0) return 0;
+    if (sd <= 0) return Math.min(mu, stock);
+    var z = (stock - mu) / sd;
+    var loss = phi(z) - z * (1 - Phi(z));
+    return Math.max(0, Math.min(stock, mu - sd * loss));
+  }
+
+  function read() {
+    var p = {};
+    IDS.forEach(function (k) { var v = parseFloat($(k).value); p[k] = isFinite(v) ? v : 0; });
+    return p;
+  }
+
+  // 한 시나리오(할인율 d, 리오더 Q) 계산
+  function scenario(p, d, Q) {
+    var stock0 = Math.max(0, p.initq - p.sold);
+    var netP = p.tag * (1 - d) / 1.1 * (1 - p.comm / 100 - p.varc / 100);
+    var mult = Math.pow(1 - d, -p.elas);
+    var weeks = Math.max(1, Math.round(p.weeks));
+    var lead = Math.max(0, Math.round(p.lead));
+    var muPre = 0, muPost = 0, demand = [];
+    for (var k = 0; k < weeks; k++) {
+      var dk = p.vel * Math.pow(1 + p.growth / 100, k) * mult;
+      demand.push(dk);
+      if (k < lead) muPre += dk; else muPost += dk;
+    }
+    if (lead >= weeks) Q = 0;
+    var cv = p.cv / 100;
+    var pre = expSales(muPre, muPre * cv, stock0);
+    var left = Math.max(0, stock0 - pre);
+    var post = expSales(muPost, muPost * cv, left + Q);
+    var sales = pre + post;
+    var end = stock0 + Q - sales;
+    var salvU = p.cost * p.salv / 100;
+    var profit = sales * netP + end * salvU - Q * p.rcost - (Q > 0 ? p.fixed : 0);
+    return { d: d, Q: Q, netP: netP, mult: mult, sales: sales, end: end, profit: profit, muPre: muPre, muPost: muPost,
+      demand: demand, stock0: stock0, salvU: salvU, lead: lead, weeks: weeks,
+      sellThru: (p.sold + sales) / Math.max(1, p.initq + Q) };
+  }
+
+  // 할인율 d에서 기대이익이 최대인 리오더 수량 (0 또는 MOQ 이상, 10장 단위)
+  function bestQ(p, d) {
+    var base = scenario(p, d, 0);
+    var best = base, curve = [{ Q: 0, profit: base.profit }];
+    if (base.lead >= base.weeks) return { best: best, curve: curve };
+    var qMax = Math.max(p.moq, Math.ceil(base.muPost * (1 + 3 * p.cv / 100) / 10) * 10 + 10);
+    var step = Math.max(10, Math.round(qMax / 120 / 10) * 10);
+    var start = Math.max(step, Math.ceil(p.moq / step) * step);
+    if (p.moq > 0 && start !== p.moq) { var sm = scenario(p, d, p.moq); curve.push({ Q: p.moq, profit: sm.profit }); if (sm.profit > best.profit) best = sm; }
+    for (var q = start; q <= qMax; q += step) {
+      var s = scenario(p, d, q);
+      curve.push({ Q: q, profit: s.profit });
+      if (s.profit > best.profit + 1) best = s;
+    }
+    curve.sort(function (a, b) { return a.Q - b.Q; });
+    return { best: best, curve: curve };
+  }
+
+  function analyse(p) {
+    var unit0 = p.tag / 1.1 * (1 - p.comm / 100 - p.varc / 100) - p.cost;
+    var rows = DISCOUNTS.map(function (d) {
+      var r = bestQ(p, d);
+      var s = r.best;
+      var unit = s.netP - p.cost;
+      return { d: d, s: s, curve: r.curve, unit: unit, margin: unit / s.netP,
+        need: unit > 0 ? unit0 / unit - 1 : Infinity, expect: s.mult - 1 };
+    });
+    var best = rows.reduce(function (a, b) { return b.s.profit > a.s.profit ? b : a; });
+    return { rows: rows, best: best, keep: scenario(p, 0, 0), unit0: unit0 };
+  }
+
+  // ---------- SVG charts
+  var NS = "http://www.w3.org/2000/svg";
+  function svgEl(w, h, label) {
+    var s = document.createElementNS(NS, "svg");
+    s.setAttribute("viewBox", "0 0 " + w + " " + h);
+    s.setAttribute("role", "img");
+    s.setAttribute("aria-label", label);
+    return s;
+  }
+  function add(parent, tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    parent.appendChild(e);
+    return e;
+  }
+  function niceTicks(lo, hi, n) {
+    var span = hi - lo || 1, raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    var step = [1, 2, 2.5, 5, 10].map(function (m) { return m * mag; }).find(function (s) { return span / s <= n; }) || 10 * mag;
+    var t = [], v = Math.floor(lo / step) * step;
+    do { t.push(v); v += step; } while (t[t.length - 1] < hi - step * 1e-9);  // 마지막 눈금이 최댓값 이상이 되도록
+    return t;
+  }
+
+  function chartDiscount(a) {
+    var W = 720, H = 220, L = 64, R = 12, T = 14, B = 34;
+    var s = svgEl(W, H, "할인율별 남은 시즌 기대이익 막대 그래프");
+    var vals = a.rows.map(function (r) { return r.s.profit; });
+    var ticks = niceTicks(Math.min(0, Math.min.apply(null, vals)), Math.max(0, Math.max.apply(null, vals)), 4);
+    var lo = ticks[0], hi = ticks[ticks.length - 1];
+    var y = function (v) { return T + (H - T - B) * (hi - v) / (hi - lo || 1); };
+    ticks.forEach(function (t) {
+      add(s, "line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: "axis", "stroke-width": t === 0 ? 1.2 : 0.6 });
+      add(s, "text", { x: L - 6, y: y(t) + 4, "text-anchor": "end" }, man(t));
+    });
+    var bw = (W - L - R) / a.rows.length;
+    a.rows.forEach(function (r, i) {
+      var x = L + i * bw + bw * 0.2, v = r.s.profit;
+      var isBest = r === a.best;
+      add(s, "rect", { x: x, width: bw * 0.6, y: Math.min(y(v), y(0)), height: Math.max(1, Math.abs(y(v) - y(0))), rx: 3,
+        fill: isBest ? "var(--accent)" : (v < 0 ? "var(--bad)" : "var(--bar)") });
+      add(s, "text", { x: x + bw * 0.3, y: (v >= 0 ? y(v) - 5 : y(v) + 13), "text-anchor": "middle", style: "fill:var(--ink);font-family:var(--f-num)" }, man(v));
+      add(s, "text", { x: x + bw * 0.3, y: H - 12, "text-anchor": "middle" }, (r.d * 100) + "% · 리오더 " + won(r.s.Q));
+    });
+    return s;
+  }
+
+  function chartQ(row, p) {
+    var W = 520, H = 230, L = 60, R = 14, T = 14, B = 30;
+    var s = svgEl(W, H, "리오더 수량별 기대이익 선 그래프");
+    var c = row.curve;
+    var xs = c.map(function (o) { return o.Q; }), ys = c.map(function (o) { return o.profit; });
+    var xMax = Math.max.apply(null, xs) || 1;
+    var yt = niceTicks(Math.min.apply(null, ys), Math.max.apply(null, ys), 4);
+    var lo = yt[0], hi = yt[yt.length - 1];
+    var X = function (v) { return L + (W - L - R) * v / xMax; };
+    var Y = function (v) { return T + (H - T - B) * (hi - v) / (hi - lo || 1); };
+    yt.forEach(function (t) {
+      add(s, "line", { x1: L, x2: W - R, y1: Y(t), y2: Y(t), class: "axis", "stroke-width": 0.6 });
+      add(s, "text", { x: L - 6, y: Y(t) + 4, "text-anchor": "end" }, man(t));
+    });
+    niceTicks(0, xMax, 5).forEach(function (t) {
+      if (t > xMax) return;
+      add(s, "text", { x: X(t), y: H - 10, "text-anchor": "middle" }, won(t) + "장");
+    });
+    if (p.moq > 0 && p.moq <= xMax) add(s, "line", { x1: X(p.moq), x2: X(p.moq), y1: T, y2: H - B, stroke: "var(--warn)", "stroke-dasharray": "4 4" });
+    var d = c.map(function (o, i) { return (i ? "L" : "M") + X(o.Q).toFixed(1) + " " + Y(o.profit).toFixed(1); }).join(" ");
+    add(s, "path", { d: d, fill: "none", stroke: "var(--accent)", "stroke-width": 2 });
+    add(s, "circle", { cx: X(row.s.Q), cy: Y(row.s.profit), r: 5, fill: "var(--accent)", stroke: "var(--surface)", "stroke-width": 2 });
+    add(s, "text", { x: Math.min(X(row.s.Q) + 8, W - 120), y: Y(row.s.profit) - 8, style: "fill:var(--ink);font-weight:600" }, "추천 " + won(row.s.Q) + "장");
+    return s;
+  }
+
+  function chartWeeks(sc) {
+    var W = 520, H = 230, L = 46, R = 14, T = 14, B = 30;
+    var s = svgEl(W, H, "주차별 예상 판매와 재고 그래프");
+    var stock = sc.stock0, salesW = [], stockW = [];
+    var leftover = sc.stock0;
+    for (var k = 0; k < sc.weeks; k++) {
+      if (k === sc.lead && sc.Q > 0) leftover += sc.Q;
+      var sold = Math.min(leftover, sc.demand[k]);
+      leftover -= sold;
+      salesW.push(sold); stockW.push(leftover);
+    }
+    var top = Math.max(sc.stock0, Math.max.apply(null, stockW.concat(salesW)), 1);
+    var yt = niceTicks(0, top, 4), hi = yt[yt.length - 1];
+    var bw = (W - L - R) / sc.weeks;
+    var Y = function (v) { return T + (H - T - B) * (hi - v) / hi; };
+    yt.forEach(function (t) {
+      add(s, "line", { x1: L, x2: W - R, y1: Y(t), y2: Y(t), class: "axis", "stroke-width": 0.6 });
+      add(s, "text", { x: L - 6, y: Y(t) + 4, "text-anchor": "end" }, won(t));
+    });
+    salesW.forEach(function (v, k) {
+      add(s, "rect", { x: L + k * bw + bw * 0.18, width: bw * 0.64, y: Y(v), height: Math.max(0, Y(0) - Y(v)), fill: "var(--bar)", rx: 2 });
+      if (sc.weeks <= 16 || k % 2 === 0) add(s, "text", { x: L + k * bw + bw / 2, y: H - 10, "text-anchor": "middle" }, (k + 1) + "주");
+    });
+    var d = stockW.map(function (v, k) { return (k ? "L" : "M") + (L + k * bw + bw / 2).toFixed(1) + " " + Y(v).toFixed(1); }).join(" ");
+    add(s, "path", { d: d, fill: "none", stroke: "var(--accent)", "stroke-width": 2 });
+    if (sc.Q > 0 && sc.lead < sc.weeks) {
+      var xa = L + sc.lead * bw + 1;
+      add(s, "line", { x1: xa, x2: xa, y1: T, y2: H - B, stroke: "var(--warn)", "stroke-width": 2 });
+      add(s, "text", { x: xa + 4, y: T + 10, style: "fill:var(--warn);font-weight:600" }, "리오더 " + won(sc.Q) + "장 입고");
+    }
+    return s;
+  }
+
+  // ---------- render
+  function render() {
+    var p = read();
+    var a = analyse(p);
+    if (selD == null || !a.rows.some(function (r) { return r.d === selD; })) selD = a.best.d;
+    var stock0 = Math.max(0, p.initq - p.sold);
+    var st = p.sold / Math.max(1, p.initq);
+    var cover = p.vel > 0 ? stock0 / p.vel : Infinity;
+    var b = a.best, gain = b.s.profit - a.keep.profit;
+
+    // 판정
+    var pill = $("v-pill"), head, body;
+    if (b.s.Q > 0 && b.d === 0) { pill.className = "pill good"; pill.textContent = "리오더 권장"; head = "정상가 유지 + 리오더 " + won(b.s.Q) + "장"; }
+    else if (b.s.Q > 0) { pill.className = "pill good"; pill.textContent = "리오더 + 가격인하"; head = (b.d * 100) + "% 인하 + 리오더 " + won(b.s.Q) + "장"; }
+    else if (b.d > 0) { pill.className = "pill warn"; pill.textContent = "가격인하 권장"; head = (b.d * 100) + "% 인하, 리오더 없음"; }
+    else { pill.className = "pill info"; pill.textContent = "현 상태 유지"; head = "정상가 유지, 리오더 없음"; }
+    body = "남은 " + Math.round(p.weeks) + "주 기대이익 " + won(b.s.profit) + "원으로, 지금 그대로(정상가·리오더 없음) " + won(a.keep.profit) + "원보다 " +
+      (gain >= 0 ? won(gain) + "원 많습니다." : won(-gain) + "원 적습니다.") +
+      " 시즌말 판매율 " + pct(b.s.sellThru) + ", 남는 재고 " + won(b.s.end) + "장 예상.";
+    $("v-head").textContent = head;
+    $("v-body").textContent = body;
+    var season = p.sold * a.rows[0].s.netP + b.s.profit - p.initq * p.cost;
+    $("kpis").innerHTML = [
+      ["현재 판매율", pct(st)], ["현재 재고", won(stock0) + "장"], ["재고 소진까지", isFinite(cover) ? cover.toFixed(1) + "주" : "—"],
+      ["정상가 마진율", pct(a.unit0 / a.rows[0].s.netP)], ["원가 손익분기 할인율", pct(1 - p.cost / (p.tag / 1.1 * (1 - p.comm / 100 - p.varc / 100)))],
+      ["시즌 전체 예상 손익", man(season) + "원"]
+    ].map(function (k, i) { return '<div class="kpi"' + (i === 5 ? ' style="border-color:var(--accent)"' : "") + "><b>" + k[1] + "</b><span>" + k[0] + "</span></div>"; }).join("");
+
+    // 할인율 표
+    $("dtable").querySelector("tbody").innerHTML = a.rows.map(function (r) {
+      var ok = r.unit <= 0 ? '<span class="pill bad">원가 이하</span>' : (r.expect >= r.need ? '<span class="pill good">이익 증가</span>' : '<span class="pill warn">판매증가 부족</span>');
+      if (r.d === 0) ok = '<span class="pill info">기준</span>';
+      return '<tr data-d="' + r.d + '" class="' + (r === a.best ? "best " : "") + (r.d === selD ? "sel" : "") + '" tabindex="0">' +
+        "<td>" + (r.d * 100) + "%</td><td>" + won(p.tag * (1 - r.d)) + "</td><td>" + won(r.s.netP) + "</td>" +
+        '<td class="' + (r.unit < 0 ? "neg" : "") + '">' + won(r.unit) + "</td><td>" + pct(r.margin) + "</td>" +
+        "<td>" + (r.d === 0 ? "—" : (isFinite(r.need) ? "+" + pct(r.need, 0) : "불가")) + "</td>" +
+        "<td>" + (r.d === 0 ? "—" : "+" + pct(r.expect, 0)) + "</td><td class=\"t\">" + ok + "</td>" +
+        "<td>" + won(r.s.Q) + "</td><td>" + won(r.s.sales) + "</td><td>" + won(r.s.end) + "</td><td>" + pct(r.s.sellThru) + "</td>" +
+        '<td class="' + (r.s.profit < 0 ? "neg" : "") + '"><b>' + won(r.s.profit) + "</b></td></tr>";
+    }).join("");
+    $("bep-note").textContent = "손익분기 판매증가율 = 정상가 판매 때와 같은 이익(장당 이익 × 판매량)을 내려면 판매량이 몇 % 늘어야 하는지. " +
+      "예상 판매증가율(탄력성 가정)이 이보다 크면 인하가 이익을 늘립니다. 남은 시즌 기대이익은 기존 재고 소진과 시즌 후 처분까지 반영한 값이라, 재고가 많을 때는 이 판정보다 우선합니다.";
+    var cd = $("chart-d"); cd.innerHTML = ""; cd.appendChild(chartDiscount(a));
+
+    // 리오더 상세
+    var row = a.rows.filter(function (r) { return r.d === selD; })[0];
+    var sc = row.s;
+    $("r-title").textContent = "리오더 수량 결정 · 할인율 " + (selD * 100) + "%";
+    var cr = (sc.netP - p.rcost) / Math.max(1, sc.netP - sc.salvU);
+    var bepUnits = sc.Q > 0 ? (sc.Q * (p.rcost - sc.salvU) + p.fixed) / Math.max(1, sc.netP - sc.salvU) : 0;
+    var noRe = scenario(p, selD, 0);
+    var shortage = Math.max(0, sc.muPost + sc.muPre - sc.stock0);
+    var desc;
+    if (sc.lead >= sc.weeks) desc = "리드타임(" + sc.lead + "주)이 남은 시즌(" + sc.weeks + "주)보다 길어 리오더가 시즌 안에 들어오지 못합니다.";
+    else if (sc.Q === 0) desc = "리오더 없이 현재 재고로 남은 수요를 감당하거나, 리오더 비용(고정비 " + won(p.fixed) + "원 + MOQ " + won(p.moq) + "장)을 회수하지 못하는 구간입니다.";
+    else desc = "입고 이후(" + (sc.lead + 1) + "주차~) 예상 수요 " + won(sc.muPost) + "장 중 재고로 못 채우는 부분을, 품절 손실과 재고 처분 손실이 균형을 이루는 수량까지 리오더합니다.";
+    $("r-desc").textContent = desc;
+    $("rfacts").innerHTML = [
+      ["추천 리오더 수량", won(sc.Q) + "장", "MOQ " + won(p.moq) + "장 · 10장 단위"],
+      ["리오더 손익분기 판매", sc.Q > 0 ? won(bepUnits) + "장" : "—", sc.Q > 0 ? "리오더분 판매율 " + pct(bepUnits / sc.Q) + " 이상이면 이익" : "리오더 없음"],
+      ["리오더로 늘어나는 이익", won(sc.profit - noRe.profit) + "원", "같은 할인율, 리오더 없을 때 대비"],
+      ["남은 시즌 예상 수요", won(sc.muPre + sc.muPost) + "장", "현재 재고 대비 부족 " + won(shortage) + "장"],
+      ["임계 비율", sc.lead < sc.weeks ? pct(Math.max(0, Math.min(1, cr)), 0) : "—", "품절 손실 ÷ (품절 손실 + 재고 손실)"]
+    ].map(function (f) { return '<div class="fact"><b>' + f[1] + "</b><span>" + f[0] + "<br>" + f[2] + "</span></div>"; }).join("");
+    var cq = $("chart-q"); cq.innerHTML = ""; cq.appendChild(chartQ(row, p));
+    var cw = $("chart-w"); cw.innerHTML = ""; cw.appendChild(chartWeeks(sc));
+  }
+
+  // ---------- 다품번
+  var batchRows = [];
+  function runBatch() {
+    var common = read();
+    var lines = $("batch").value.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    if (lines.length && /[가-힣a-zA-Z]/.test(lines[0].split(/[,\t]/)[1] || "")) lines.shift();
+    batchRows = lines.map(function (l) {
+      var c = l.split(/\t|,/).map(function (x) { return x.trim().replace(/[^\d.\-]/g, function (ch) { return ch; }); });
+      var n = function (i) { var v = parseFloat(String(c[i] || "").replace(/,/g, "")); return isFinite(v) ? v : NaN; };
+      var p = Object.assign({}, common, { tag: n(1), cost: n(2), rcost: n(3), initq: n(4), sold: n(5), vel: n(6), weeks: n(7), lead: n(8), moq: n(9), fixed: n(10) });
+      var bad = ["tag", "cost", "rcost", "initq", "sold", "vel", "weeks", "lead", "moq", "fixed"].filter(function (k) { return !isFinite(p[k]); });
+      if (bad.length) return { id: c[0], err: "숫자 확인 필요: " + bad.join(", ") };
+      var a = analyse(p);
+      return { id: c[0], p: p, a: a };
+    });
+    $("btable").querySelector("tbody").innerHTML = batchRows.map(function (r) {
+      if (r.err) return '<tr><td class="t">' + esc(r.id || "?") + '</td><td colspan="9" class="t neg">' + esc(r.err) + "</td></tr>";
+      var b = r.a.best, st = r.p.sold / Math.max(1, r.p.initq), cover = r.p.vel > 0 ? (r.p.initq - r.p.sold) / r.p.vel : Infinity;
+      var tag = b.s.Q > 0 ? '<span class="pill good">' + (b.d > 0 ? "리오더+인하" : "리오더") + "</span>" : (b.d > 0 ? '<span class="pill warn">가격인하</span>' : '<span class="pill info">유지</span>');
+      var gain = b.s.profit - r.a.keep.profit;
+      return '<tr><td class="t">' + esc(r.id) + "</td><td>" + pct(st) + "</td><td>" + (isFinite(cover) ? cover.toFixed(1) : "—") + "</td><td>" + (b.d * 100) + "%</td><td>" + won(b.s.Q) +
+        "</td><td>" + won(b.s.sales) + "</td><td>" + pct(b.s.sellThru) + "</td><td>" + won(b.s.profit) + '</td><td class="' + (gain > 0 ? "pos" : "") + '">' + (gain > 0 ? "+" : "") + won(gain) + '</td><td class="t">' + tag + "</td></tr>";
+    }).join("");
+  }
+  function copyBatch() {
+    var head = "품번\t판매율\t재고소진(주)\t추천할인율\t추천리오더\t예상판매\t시즌말판매율\t기대이익\t유지대비\t판정";
+    var body = batchRows.filter(function (r) { return !r.err; }).map(function (r) {
+      var b = r.a.best;
+      var act = b.s.Q > 0 ? (b.d > 0 ? "리오더+인하" : "리오더") : (b.d > 0 ? "가격인하" : "유지");
+      return [r.id, (r.p.sold / Math.max(1, r.p.initq)).toFixed(3), r.p.vel > 0 ? ((r.p.initq - r.p.sold) / r.p.vel).toFixed(1) : "", b.d, b.s.Q, Math.round(b.s.sales),
+        b.s.sellThru.toFixed(3), Math.round(b.s.profit), Math.round(b.s.profit - r.a.keep.profit), act].join("\t");
+    });
+    var text = [head].concat(body).join("\n");
+    var msg = $("copy-msg");
+    var fallback = function () {
+      $("batch").value = text; $("batch").select(); msg.textContent = "복사 권한이 없어 결과를 입력칸에 넣고 선택했습니다. Ctrl+C로 복사하세요 (입력은 '예시 품번 불러오기'로 되돌릴 수 있습니다).";
+    };
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "복사했습니다. 엑셀에 붙여넣으세요."; }, fallback); } catch (e) { fallback(); }
+  }
+
+  // ---------- wiring
+  function loadPreset(name) {
+    var v = PRESETS[name];
+    IDS.forEach(function (k) { $(k).value = v[k]; });
+    selD = null;
+    render();
+  }
+  IDS.forEach(function (k) { $(k).addEventListener("input", function () { render(); }); });
+  $("preset").addEventListener("change", function (e) { loadPreset(e.target.value); $("batch").value = BATCH_SAMPLE; runBatch(); });
+  $("dtable").addEventListener("click", function (e) {
+    var tr = e.target.closest("tr[data-d]"); if (!tr) return;
+    selD = parseFloat(tr.getAttribute("data-d")); render();
+  });
+  $("dtable").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var tr = e.target.closest("tr[data-d]"); if (!tr) return;
+    e.preventDefault(); selD = parseFloat(tr.getAttribute("data-d")); render();
+  });
+  $("run-batch").addEventListener("click", runBatch);
+  $("copy-batch").addEventListener("click", copyBatch);
+  $("batch").value = BATCH_SAMPLE;
+  loadPreset("coat");
+  runBatch();
+  window.__calc = { scenario: scenario, analyse: analyse, read: read };
+  window.__ui = { svgEl: svgEl, add: add, niceTicks: niceTicks, won: won, pct: pct, esc: esc };
+})();
+</script>
+<script>
+// ① 복종별 판매추이: 네이버 데이터랩 지수(주간) → 전년 동주 패턴 × 최근 성장률 예측 → ② 리오더 판단의 주간 변화율로 연결
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var U = window.__ui;
+  var DAY = 864e5, WEEK = 7 * DAY;
+  var XLSX_URL = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+  var S = { idx: null, sales: null, demo: true, src: "", salesSrc: "", H: 16, sel: null, rows: [] };
+
+  // ---------- 날짜·숫자
+  function utc(y, m, d) { return Date.UTC(y, m - 1, d); }
+  function monday(t) { return t - ((new Date(t).getUTCDay() + 6) % 7) * DAY; }
+  function fmtD(t) { var d = new Date(t); return (d.getUTCMonth() + 1) + "/" + d.getUTCDate(); }
+  function fmtFull(t) { var d = new Date(t); return d.getUTCFullYear() + "." + String(d.getUTCMonth() + 1).padStart(2, "0") + "." + String(d.getUTCDate()).padStart(2, "0"); }
+  function fmtYM(t) { var d = new Date(t); return String(d.getUTCFullYear()).slice(2) + "." + String(d.getUTCMonth() + 1).padStart(2, "0"); }
+  function parseDate(v) {
+    if (v == null || v === "") return null;
+    if (v instanceof Date) { if (isNaN(v)) return null; var x = new Date(v.getTime() + 12 * 3600e3); return utc(x.getFullYear(), x.getMonth() + 1, x.getDate()); }
+    if (typeof v === "number") {
+      if (v > 20000 && v < 80000) return Date.UTC(1899, 11, 30) + Math.round(v) * DAY;
+      if (v >= 19000101 && v <= 21001231 && Math.floor(v) === v) return utc(Math.floor(v / 10000), Math.floor(v / 100) % 100, v % 100);
+      return null;
+    }
+    var s = String(v), m = s.match(/(\d{4})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})/) || s.match(/^\s*(\d{4})(\d{2})(\d{2})(?!\d)/);
+    if (!m) return null;
+    var mo = +m[2], d = +m[3];
+    return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? utc(+m[1], mo, d) : null;
+  }
+  function num(v) { if (typeof v === "number") return v; if (v == null || v instanceof Date) return NaN; var s = String(v).replace(/[,%\s]/g, ""); return s === "" ? NaN : Number(s); }
+  function nk(s) { return String(s).replace(/\s/g, "").toLowerCase(); }
+  function mean(a) { var s = 0, n = 0; for (var i = 0; i < a.length; i++) if (isFinite(a[i])) { s += a[i]; n++; } return n ? s / n : NaN; }
+  function sum(a, i, j) { var s = 0; for (var k = i; k < j; k++) s += a[k]; return s; }
+  function sp(v, d) { return isFinite(v) ? (v > 0 ? "+" : "") + (v * 100).toFixed(d || 0) + "%" : "—"; }
+  function cls(v) { return isFinite(v) ? (v > 0.005 ? "pos" : (v < -0.005 ? "neg" : "")) : ""; }
+
+  // ---------- 파일 읽기
+  function parseCSV(text) {
+    var first = text.split(/\r?\n/, 1)[0] || "", cnt = function (re) { return (first.match(re) || []).length; };
+    var delim = cnt(/\t/g) > cnt(/,/g) ? "\t" : (cnt(/;/g) > cnt(/,/g) ? ";" : ",");
+    var rows = [], row = [], cell = "", q = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+      else if (c === '"') q = true;
+      else if (c === delim) { row.push(cell); cell = ""; }
+      else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+      else cell += c;
+    }
+    if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+    return rows;
+  }
+  function decode(buf) {
+    var t = new TextDecoder("utf-8").decode(buf);
+    if (t.indexOf(String.fromCharCode(0xFFFD)) >= 0) { try { t = new TextDecoder("euc-kr").decode(buf); } catch (e) { /* utf-8 유지 */ } }
+    return t.replace(/^﻿/, "");
+  }
+  function loadXLSX(cb) {
+    if (window.XLSX) return cb(true);
+    var s = document.createElement("script");
+    s.src = XLSX_URL; s.onload = function () { cb(!!window.XLSX); }; s.onerror = function () { cb(false); };
+    document.head.appendChild(s);
+  }
+  function toSheets(name, buf, cb) {
+    if (/\.(csv|txt|tsv)$/i.test(name)) return cb([{ name: name, rows: parseCSV(decode(buf)) }]);
+    loadXLSX(function (ok) {
+      if (!ok) return cb(null, "엑셀 읽기 도구를 불러오지 못했습니다. 파일을 CSV로 저장해 올려주세요.");
+      try {
+        var wb = window.XLSX.read(new Uint8Array(buf), { type: "array", cellDates: true });
+        cb(wb.SheetNames.map(function (n) { return { name: n, rows: window.XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: null, blankrows: false }) }; }));
+      } catch (e) { cb(null, "엑셀 파일을 해석하지 못했습니다 (" + e.message + ")."); }
+    });
+  }
+
+  // 넓은 표: 날짜 열 + 값 열들. 데이터랩 다운로드처럼 (날짜, 값) 쌍이 반복돼도 인식
+  var DATE_HDR = /날짜|일자|주차|기간|date|period|week/i;
+  function parseWide(rows, agg) {
+    var first = -1, dcols = null;
+    for (var i = 0; i < rows.length && first < 0; i++) {
+      var r = rows[i] || [], ds = [], hasNum = false;
+      for (var c = 0; c < r.length; c++) { if (parseDate(r[c]) != null) ds.push(c); else if (isFinite(num(r[c]))) hasNum = true; }
+      if (ds.length && hasNum) { first = i; dcols = ds; }
+    }
+    if (first < 0) return null;
+    var width = 0;
+    rows.slice(first, first + 60).forEach(function (r) { width = Math.max(width, (r || []).length); });
+    var label = function (v) { return v != null && String(v).trim() !== "" && !DATE_HDR.test(String(v)) && parseDate(v) == null && !isFinite(num(v)) ? String(v).trim() : null; };
+    var used = {}, cols = [];
+    dcols.forEach(function (j, g) {
+      var end = g + 1 < dcols.length ? dcols[g + 1] : width, vals = [];
+      for (var c = j + 1; c < end; c++) vals.push(c);
+      vals.forEach(function (c) {
+        var nm = null;
+        for (var k = first - 1; k >= Math.max(0, first - 6) && !nm; k--) nm = label((rows[k] || [])[c]) || (vals.length === 1 ? label((rows[k] || [])[j]) : null);
+        nm = nm || ("계열" + (cols.length + 1));
+        var base = nm, n = 2;
+        while (used[nm]) nm = base + "(" + n++ + ")";
+        used[nm] = true;
+        cols.push({ j: j, c: c, name: nm });
+      });
+    });
+    var acc = {};
+    cols.forEach(function (o) { acc[o.name] = {}; });
+    for (var r2 = first; r2 < rows.length; r2++) {
+      var row = rows[r2] || [];
+      cols.forEach(function (o) {
+        var t = parseDate(row[o.j]), v = num(row[o.c]);
+        if (t == null || !isFinite(v)) return;
+        var w = monday(t), b = acc[o.name][w] || (acc[o.name][w] = { s: 0, n: 0 });
+        b.s += v; b.n++;
+      });
+    }
+    var names = [], data = {};
+    cols.forEach(function (o) {
+      var ks = Object.keys(acc[o.name]);
+      if (!ks.length) return;
+      data[o.name] = {};
+      ks.forEach(function (k) { var b = acc[o.name][k]; data[o.name][k] = agg === "sum" ? b.s : b.s / b.n; });
+      names.push(o.name);
+    });
+    return names.length ? { names: names, data: data } : null;
+  }
+  // 긴 표: 주차, 복종, 판매수량
+  function parseLong(rows) {
+    for (var i = 0; i < Math.min(rows.length, 10); i++) {
+      var h = (rows[i] || []).map(function (v) { return v == null ? "" : String(v).trim(); });
+      var dc = h.findIndex(function (x) { return /주차|날짜|일자|date|week/i.test(x); });
+      var nc = h.findIndex(function (x) { return /복종|품목|아이템|카테고리|item|category/i.test(x); });
+      var qc = h.findIndex(function (x) { return /판매|수량|qty|sales/i.test(x) && !/금액|가$|단가/.test(x); });
+      if (dc < 0 || nc < 0 || qc < 0) continue;
+      var data = {}, names = [];
+      for (var r = i + 1; r < rows.length; r++) {
+        var row = rows[r] || [], t = parseDate(row[dc]), nm = row[nc] == null ? "" : String(row[nc]).trim(), q = num(row[qc]);
+        if (t == null || !nm || !isFinite(q)) continue;
+        var w = monday(t);
+        if (!data[nm]) { data[nm] = {}; names.push(nm); }
+        data[nm][w] = (data[nm][w] || 0) + q;
+      }
+      return names.length ? { names: names, data: data } : null;
+    }
+    return null;
+  }
+  function toIndex(p) {
+    var lo = Infinity, hi = -Infinity;
+    p.names.forEach(function (nm) { Object.keys(p.data[nm]).forEach(function (k) { lo = Math.min(lo, +k); hi = Math.max(hi, +k); }); });
+    var weeks = [];
+    for (var t = lo; t <= hi; t += WEEK) weeks.push(t);
+    var series = {}, names = [], mx = 0;
+    p.names.forEach(function (nm) {
+      var s = weeks.map(function (w) { var v = p.data[nm][w]; return isFinite(v) ? Math.max(0, v) : 0; });
+      if (sum(s, 0, s.length) <= 0) return;
+      series[nm] = s; names.push(nm); mx = Math.max(mx, Math.max.apply(null, s));
+    });
+    names.forEach(function (nm) { series[nm] = series[nm].map(function (v) { return v * 100 / mx; }); });
+    return { weeks: weeks, names: names, series: series };
+  }
+  function loadIndex(name, sheets) {
+    var order = sheets.slice().sort(function (a, b) { var sc = function (s) { return /지수실적|실적/.test(s.name) ? 0 : (/예측|요약|연계/.test(s.name) ? 2 : 1); }; return sc(a) - sc(b); });
+    for (var i = 0; i < order.length; i++) {
+      if (/예측|요약|연계/.test(order[i].name) && order.length > 1) continue;
+      if (parseLong(order[i].rows)) continue;
+      var p = parseWide(order[i].rows, "mean");
+      if (!p) continue;
+      var idx = toIndex(p);
+      if (idx.names.length && idx.weeks.length >= 12) return { idx: idx, sheet: order[i].name };
+    }
+    return null;
+  }
+  function loadSales(sheets) {
+    for (var i = 0; i < sheets.length; i++) {
+      var p = parseLong(sheets[i].rows) || parseWide(sheets[i].rows, "sum");
+      if (p) return p;
+    }
+    return null;
+  }
+
+  // ---------- 예측 (Colab 코드와 같은 방식)
+  function forecast(s, H, recent) {
+    recent = recent || 8;
+    var n = s.length, out = [];
+    var sm = s.map(function (v, i) { return mean(s.slice(Math.max(0, i - 1), i + 2)); });
+    for (var h = 0; h < H; h++) {
+      var vals = [];
+      for (var y = 1; y <= 2; y++) {
+        var lag = 52 * y, pos = n + h - lag;
+        if (pos < 0 || n - recent - lag < 0) continue;
+        var past = sum(s, n - recent - lag, n - lag), g = past > 0 ? sum(s, n - recent, n) / past : 1;
+        vals.push(sm[pos] * Math.min(3, Math.max(0.3, g)));
+      }
+      out.push(Math.max(0, vals.length ? mean(vals) : mean(s.slice(-recent))));
+    }
+    return out;
+  }
+  function backtest(s, H) {
+    var h = Math.min(H, 8), train = s.slice(0, s.length - h), test = s.slice(s.length - h);
+    var f = forecast(train, h), nv = mean(train.slice(-4)), den = sum(test, 0, h) || 1, e1 = 0, e2 = 0;
+    for (var i = 0; i < h; i++) { e1 += Math.abs(f[i] - test[i]); e2 += Math.abs(nv - test[i]); }
+    return { wape: e1 / den, naive: e2 / den };
+  }
+  function fit(xs, ys) {
+    var n = xs.length, mx = mean(xs), my = mean(ys), sxx = 0, sxy = 0, syy = 0;
+    for (var i = 0; i < n; i++) { sxx += (xs[i] - mx) * (xs[i] - mx); sxy += (xs[i] - mx) * (ys[i] - my); syy += (ys[i] - my) * (ys[i] - my); }
+    if (sxx <= 0 || syy <= 0) return null;
+    var b = sxy / sxx;
+    return { a: my - b * mx, b: b, r2: sxy * sxy / (sxx * syy), n: n };
+  }
+  function salesFor(name) {
+    if (!S.sales) return null;
+    for (var i = 0; i < S.sales.names.length; i++) if (nk(S.sales.names[i]) === nk(name)) return S.sales.data[S.sales.names[i]];
+    return null;
+  }
+  function compute() {
+    var idx = S.idx, H = S.H, n = idx.weeks.length, last = idx.weeks[n - 1];
+    return idx.names.map(function (nm) {
+      var s = idx.series[nm], f = forecast(s, H), bt = backtest(s, H);
+      var recent4 = mean(s.slice(-4)), ly4 = n >= 56 ? mean(s.slice(n - 56, n - 52)) : NaN, fMean = mean(f);
+      var pk = 0; f.forEach(function (v, i) { if (v > f[pk]) pk = i; });
+      var r = { name: nm, s: s, f: f, recent4: recent4, yoy: ly4 > 0 ? recent4 / ly4 - 1 : NaN, fMean: fMean,
+        chg: recent4 > 0 ? fMean / recent4 - 1 : NaN, wape: bt.wape, naive: bt.naive, peak: last + (pk + 1) * WEEK,
+        weekly: f[0] > 0 && f[H - 1] > 0 ? Math.pow(f[H - 1] / f[0], 1 / Math.max(H - 1, 1)) - 1 : NaN, link: null, hist: null, salesF: null };
+      var sd = salesFor(nm);
+      if (sd) {
+        r.hist = idx.weeks.map(function (w) { var v = sd[w]; return isFinite(v) ? v : null; });
+        [0, 1].forEach(function (lag) {
+          var xs = [], ys = [];
+          for (var i = lag; i < n; i++) if (r.hist[i] != null) { xs.push(s[i - lag]); ys.push(r.hist[i]); }
+          if (xs.length < 8) return;
+          var m = fit(xs, ys);
+          if (m && (!r.link || m.r2 > r.link.r2)) { m.lag = lag; r.link = m; }
+        });
+        if (r.link) {
+          var all = s.concat(f);
+          r.salesF = f.map(function (v, h) { return Math.max(0, Math.round(r.link.a + r.link.b * all[n + h - r.link.lag])); });
+        }
+      }
+      return r;
+    }).sort(function (a, b) { return (isFinite(b.chg) ? b.chg : -9) - (isFinite(a.chg) ? a.chg : -9); });
+  }
+
+  // ---------- 가상 데이터 (API 키 없이 화면 시연용)
+  function demo() {
+    var seed = 7;
+    var rnd = function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    var gauss = function () { return Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(2 * Math.PI * rnd()); };
+    var isoWeek = function (t) { var d = new Date(t + 3 * DAY - ((new Date(t).getUTCDay() + 6) % 7) * DAY), y = Date.UTC(d.getUTCFullYear(), 0, 1); return 1 + Math.floor((d - y) / WEEK); };
+    var now = new Date(), today = utc(now.getFullYear(), now.getMonth() + 1, now.getDate());
+    var lastMon = monday(today) - WEEK, N = 156, weeks = [];
+    for (var i = 0; i < N; i++) weeks.push(lastMon - (N - 1 - i) * WEEK);
+    // [복종, 피크 주차, 시즌 폭(주), 비시즌 바닥, 연간 추세 방향]
+    var spec = [["코트", 47, 6, 8, 1], ["패딩", 50, 5, 6, -0.6], ["후드집업", 44, 11, 30, 1], ["점퍼", 42, 6, 10, -0.6],
+      ["니트", 45, 7, 10, 1], ["가디건", 40, 7, 12, -0.6], ["데님팬츠", 37, 12, 40, 1], ["맨투맨", 41, 9, 20, -0.6]];
+    var series = {}, names = [], mx = 0, sales = { names: [], data: {} };
+    spec.forEach(function (sp1) {
+      var s = weeks.map(function (w, i) {
+        var d = Math.abs(isoWeek(w) - sp1[1]); d = Math.min(d, 52 - d);
+        var season = Math.exp(-Math.pow(d / sp1[2], 2));
+        return Math.max(0, (sp1[3] + (100 - sp1[3]) * season) * (1 + 0.12 * i / 52 * sp1[4]) * (1 + 0.08 * gauss()));
+      });
+      series[sp1[0]] = s; names.push(sp1[0]); mx = Math.max(mx, Math.max.apply(null, s));
+    });
+    names.forEach(function (nm) {
+      series[nm] = series[nm].map(function (v) { return v * 100 / mx; });
+      var k = 20 + 40 * rnd();
+      sales.names.push(nm); sales.data[nm] = {};
+      weeks.slice(-52).forEach(function (w, i) { sales.data[nm][w] = Math.max(0, Math.round(series[nm][N - 52 + i] * k * (1 + 0.12 * gauss()))); });
+    });
+    return { idx: { weeks: weeks, names: names, series: series }, sales: sales };
+  }
+
+  // ---------- 그래프
+  function chartDetail(r) {
+    var n = r.s.length, H = r.f.length, win = Math.min(n, 104), i0 = n - win, N = win + H;
+    var W = 920, Ht = 300, L = 44, R = r.hist ? 56 : 14, T = 18, B = 34;
+    var svg = U.svgEl(W, Ht, r.name + " 지수 실적과 예측 그래프");
+    var val = function (i) { return i < n ? r.s[i] : r.f[i - n]; };
+    var ly = function (i) { return i - 52 >= 0 ? val(i - 52) : null; };
+    var wk = function (i) { return S.idx.weeks[0] + i * WEEK; };
+    var top = 1, i;
+    for (i = i0; i < n + H; i++) top = Math.max(top, val(i), ly(i) || 0);
+    var yt = U.niceTicks(0, top * 1.05, 5), hi = yt[yt.length - 1], step = (W - L - R) / Math.max(1, N - 1);
+    var X = function (k) { return L + (k - i0) * step; }, Y = function (v) { return T + (Ht - T - B) * (hi - v) / hi; };
+    U.add(svg, "rect", { x: X(n - 0.5), y: T, width: W - R - X(n - 0.5), height: Ht - T - B, fill: "var(--accent-soft)", opacity: 0.55 });
+    U.add(svg, "text", { x: X(n - 0.5) + 6, y: T + 12, style: "fill:var(--accent);font-weight:600" }, "예측 " + H + "주");
+    yt.forEach(function (t) {
+      U.add(svg, "line", { x1: L, x2: W - R, y1: Y(t), y2: Y(t), class: "axis", "stroke-width": t === 0 ? 1 : 0.6 });
+      U.add(svg, "text", { x: L - 6, y: Y(t) + 4, "text-anchor": "end" }, U.won(t));
+    });
+    // 판매수량 (오른쪽 축)
+    var sv = function (k) { return k < n ? (r.hist ? r.hist[k] : null) : (r.salesF ? r.salesF[k - n] : null); };
+    if (r.hist) {
+      var smax = 1;
+      for (i = i0; i < n + H; i++) if (sv(i) != null) smax = Math.max(smax, sv(i));
+      var st = U.niceTicks(0, smax * 1.1, 4), shi = st[st.length - 1];
+      var YS = function (v) { return T + (Ht - T - B) * (shi - v) / shi; };
+      st.forEach(function (t) { U.add(svg, "text", { x: W - R + 6, y: YS(t) + 4 }, U.won(t)); });
+      for (i = i0; i < n + H; i++) {
+        var q = sv(i);
+        if (q == null) continue;
+        U.add(svg, "rect", { x: X(i) - step * 0.35, width: step * 0.7, y: YS(q), height: Math.max(0, YS(0) - YS(q)), fill: "var(--bar)", opacity: i < n ? 0.55 : 0.28 });
+      }
+    }
+    for (i = i0; i < n + H; i++) {
+      var d = new Date(wk(i));
+      if (d.getUTCDate() <= 7 && d.getUTCMonth() % 3 === 0) {
+        U.add(svg, "line", { x1: X(i), x2: X(i), y1: Ht - B, y2: Ht - B + 4, class: "axis" });
+        U.add(svg, "text", { x: X(i), y: Ht - 12, "text-anchor": "middle" }, fmtYM(wk(i)));
+      }
+    }
+    var path = function (from, to, f) { var p = ""; for (var k = from; k <= to; k++) { var v = f(k); if (v == null) continue; p += (p ? "L" : "M") + X(k).toFixed(1) + " " + Y(v).toFixed(1); } return p; };
+    U.add(svg, "path", { d: path(i0, n + H - 1, ly), fill: "none", stroke: "var(--muted)", "stroke-width": 1.2, "stroke-dasharray": "2 3", opacity: 0.8 });
+    U.add(svg, "path", { d: path(i0, n - 1, val), fill: "none", stroke: "var(--accent)", "stroke-width": 2 });
+    U.add(svg, "path", { d: path(n - 1, n + H - 1, val), fill: "none", stroke: "var(--accent)", "stroke-width": 2.2, "stroke-dasharray": "6 4" });
+    // 마우스를 올리면 그 주의 값
+    var g = U.add(svg, "g", { visibility: "hidden", style: "pointer-events:none" });
+    var vl = U.add(g, "line", { y1: T, y2: Ht - B, stroke: "var(--muted)", "stroke-width": 1 });
+    var dot = U.add(g, "circle", { r: 4, fill: "var(--accent)", stroke: "var(--surface)", "stroke-width": 2 });
+    var box = U.add(g, "rect", { rx: 5, fill: "var(--surface)", stroke: "var(--line)", width: 170 });
+    var tx = U.add(g, "text", { style: "fill:var(--ink);font-size:11.5px" });
+    var ov = U.add(svg, "rect", { x: L, y: T, width: W - L - R, height: Ht - T - B, fill: "transparent" });
+    ov.addEventListener("pointermove", function (e) {
+      var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      var p = pt.matrixTransform(svg.getScreenCTM().inverse());
+      var k = Math.max(i0, Math.min(n + H - 1, Math.round((p.x - L) / step) + i0));
+      var lines = [fmtFull(wk(k)) + " 주", (k < n ? "실적 " : "예측 ") + val(k).toFixed(1)];
+      if (ly(k) != null) lines.push("1년 전 같은 주 " + ly(k).toFixed(1));
+      if (sv(k) != null) lines.push((k < n ? "판매 " : "예측 판매 ") + U.won(sv(k)) + "장");
+      g.setAttribute("visibility", "visible");
+      vl.setAttribute("x1", X(k)); vl.setAttribute("x2", X(k));
+      dot.setAttribute("cx", X(k)); dot.setAttribute("cy", Y(val(k)));
+      var bx = X(k) + 12 + 170 > W - R ? X(k) - 182 : X(k) + 12;
+      box.setAttribute("x", bx); box.setAttribute("y", T + 4); box.setAttribute("height", lines.length * 16 + 10);
+      tx.textContent = "";
+      lines.forEach(function (ln, j) { U.add(tx, "tspan", { x: bx + 9, y: T + 21 + j * 16, style: j === 0 ? "font-weight:600" : "" }, ln); });
+    });
+    ov.addEventListener("pointerleave", function () { g.setAttribute("visibility", "hidden"); });
+    return svg;
+  }
+  function chartMini(r) {
+    var n = r.s.length, H = r.f.length, win = Math.min(n, 52), i0 = n - win, W = 240, Ht = 72, P = 4;
+    var svg = U.svgEl(W, Ht, r.name + " 최근 1년과 예측");
+    var val = function (i) { return i < n ? r.s[i] : r.f[i - n]; }, top = 1, i;
+    for (i = i0; i < n + H; i++) top = Math.max(top, val(i));
+    var X = function (k) { return P + (k - i0) * (W - 2 * P) / (win + H - 1); }, Y = function (v) { return P + (Ht - 2 * P) * (1 - v / top); };
+    U.add(svg, "rect", { x: X(n - 0.5), y: 0, width: W - X(n - 0.5), height: Ht, fill: "var(--accent-soft)", opacity: 0.6 });
+    var pa = "", pb = "";
+    for (i = i0; i < n; i++) pa += (pa ? "L" : "M") + X(i).toFixed(1) + " " + Y(val(i)).toFixed(1);
+    for (i = n - 1; i < n + H; i++) pb += (pb ? "L" : "M") + X(i).toFixed(1) + " " + Y(val(i)).toFixed(1);
+    U.add(svg, "path", { d: pa, fill: "none", stroke: "var(--accent)", "stroke-width": 1.6 });
+    U.add(svg, "path", { d: pb, fill: "none", stroke: "var(--accent)", "stroke-width": 1.8, "stroke-dasharray": "4 3" });
+    return svg;
+  }
+  function trendPill(r) {
+    if (!isFinite(r.chg)) return '<span class="pill info">—</span>';
+    return r.chg > 0.1 ? '<span class="pill good">▲ 상승</span>' : (r.chg < -0.1 ? '<span class="pill bad">▼ 하락</span>' : '<span class="pill info">― 유지</span>');
+  }
+
+  // ---------- 화면
+  function selRow() { return S.rows.filter(function (r) { return r.name === S.sel; })[0]; }
+  function render() {
+    if (!S.idx) return;
+    var H = S.H, idx = S.idx, n = idx.weeks.length;
+    $("t-h-out").textContent = H + "주";
+    $("t-h-th").innerHTML = "향후 " + H + "주<br>평균 지수";
+    S.rows = compute();
+    if (!selRow()) S.sel = (S.rows.filter(function (r) { return nk(r.name) === nk("후드집업"); })[0] || S.rows[0]).name;
+    var linked = S.rows.filter(function (r) { return r.link; }).length;
+    $("t-pill").className = "pill " + (S.demo ? "warn" : "good");
+    $("t-pill").textContent = S.demo ? "가상 데이터 · 시연용" : "올린 데이터";
+    $("t-src").textContent = S.demo ? "가상 지수로 화면을 보여주는 중입니다. 실제 분석은 데이터를 올려주세요." : S.src;
+    $("t-meta").textContent = fmtFull(idx.weeks[0]) + " ~ " + fmtFull(idx.weeks[n - 1] + 6 * DAY) + " · " + n + "주 · 복종 " + idx.names.length + "개" +
+      (S.sales ? " · 판매수량 연결 " + linked + "개" + (S.salesSrc ? " (" + S.salesSrc + ")" : "") : "") + (n < 60 ? " · 1년 이상(60주+)이어야 계절 패턴 예측이 됩니다" : "");
+    var up = S.rows.filter(function (r) { return r.chg > 0.1; }), dn = S.rows.filter(function (r) { return r.chg < -0.1; });
+    var top = S.rows[0], bot = S.rows[S.rows.length - 1];
+    $("t-kpis").innerHTML = [
+      ["상승 복종", up.length + "개"], ["유지 복종", (S.rows.length - up.length - dn.length) + "개"], ["하락 복종", dn.length + "개"],
+      ["가장 크게 오르는 복종", U.esc(top.name) + " " + sp(top.chg)], ["가장 크게 내리는 복종", U.esc(bot.name) + " " + sp(bot.chg)],
+      ["마지막 실적 주", fmtD(idx.weeks[n - 1]) + "~" + fmtD(idx.weeks[n - 1] + 6 * DAY)]
+    ].map(function (k) { return '<div class="kpi"><b>' + k[1] + "</b><span>" + k[0] + "</span></div>"; }).join("");
+
+    $("t-table").querySelector("tbody").innerHTML = S.rows.map(function (r) {
+      return '<tr data-n="' + U.esc(r.name) + '" class="' + (r.name === S.sel ? "sel" : "") + '" tabindex="0"><td class="t"><b>' + U.esc(r.name) + '</b></td><td class="t">' + trendPill(r) +
+        "</td><td>" + r.recent4.toFixed(1) + '</td><td class="' + cls(r.yoy) + '">' + sp(r.yoy) + "</td><td>" + r.fMean.toFixed(1) +
+        '</td><td class="' + cls(r.chg) + '">' + sp(r.chg) + '</td><td class="' + cls(r.weekly) + '"><b>' + sp(r.weekly, 1) + "</b></td><td>" + fmtD(r.peak) + " 주</td>" +
+        '<td class="' + (r.wape > r.naive ? "neg" : "") + '">' + U.pct(r.wape, 0) + "</td><td>" + U.pct(r.naive, 0) + "</td><td>" + (r.link ? r.link.r2.toFixed(2) : "—") +
+        "</td><td>" + (r.salesF ? U.won(sum(r.salesF, 0, r.salesF.length)) : "—") + "</td></tr>";
+    }).join("");
+
+    var r = selRow();
+    $("t-d-title").textContent = r.name + " — 최근 2년 지수와 향후 " + H + "주 예측";
+    var dir = !isFinite(r.chg) ? "계산할 수 없습니다" : (Math.abs(r.chg) <= 0.1 ? "비슷할 것으로 예상됩니다(" + sp(r.chg) + ")" :
+      Math.abs(r.chg * 100).toFixed(0) + "% " + (r.chg > 0 ? "높을" : "낮을") + " 것으로 예상됩니다");
+    $("t-d-desc").textContent = (S.demo ? "[가상 데이터] " : "") + "향후 " + H + "주 평균 지수가 최근 4주보다 " + dir + " (주평균 " + sp(r.weekly, 1) + "). " +
+      (r.wape <= r.naive ? "검증오차가 단순예측보다 작아 계절 패턴을 믿을 만합니다." : "검증오차가 단순예측보다 커서 이 복종은 예측을 참고만 하세요.") +
+      "";
+    $("t-apply").disabled = !isFinite(r.weekly);
+    $("t-apply").textContent = "주평균 " + sp(r.weekly, 1) + "로 리오더 판단하기 →";
+    $("t-facts").innerHTML = [
+      ["최근 4주 지수", r.recent4.toFixed(1), "전년 동기 대비 " + sp(r.yoy)],
+      ["향후 " + H + "주 평균 지수", r.fMean.toFixed(1), "최근 대비 " + sp(r.chg)],
+      ["주평균 변화율", sp(r.weekly, 1), "② 리오더 탭 '주간 판매 변화율'에 들어갈 값"],
+      ["예측 피크", fmtD(r.peak) + " 주", "향후 " + H + "주 중 가장 높은 주"],
+      ["검증오차 / 단순예측", U.pct(r.wape, 0) + " / " + U.pct(r.naive, 0), "마지막 " + Math.min(H, 8) + "주를 가리고 맞춰본 오차"],
+      r.link ? ["판매 연계", "R² " + r.link.r2.toFixed(2), "향후 " + H + "주 예측 판매 " + U.won(sum(r.salesF, 0, r.salesF.length)) + "장" + (r.link.lag ? " (지수 1주 선행)" : "")] : ["판매 연계", "—", "판매수량을 올리면 계산"]
+    ].map(function (f) { return '<div class="fact"><b>' + f[1] + "</b><span>" + f[0] + "<br>" + f[2] + "</span></div>"; }).join("");
+    var c = $("t-chart"); c.innerHTML = ""; c.appendChild(chartDetail(r));
+    $("t-legend").innerHTML = '<span><i style="background:var(--accent)"></i>지수 실적</span><span><i style="background:transparent;border:2px dashed var(--accent);box-sizing:border-box"></i>지수 예측</span>' +
+      '<span><i style="background:var(--muted);opacity:.6"></i>1년 전 같은 주</span>' + (r.hist ? '<span><i style="background:var(--bar)"></i>판매수량 (오른쪽 축, 연한 막대 = 예측)</span>' : "");
+
+    var m = $("t-minis"); m.innerHTML = "";
+    S.rows.forEach(function (r2) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "mini"; b.setAttribute("aria-pressed", r2.name === S.sel ? "true" : "false"); b.dataset.n = r2.name;
+      b.innerHTML = '<span class="mt"><span>' + U.esc(r2.name) + "</span>" + trendPill(r2) + "</span>";
+      b.appendChild(chartMini(r2));
+      m.appendChild(b);
+    });
+  }
+  function select(name) { S.sel = name; render(); }
+
+  // ---------- 업로드
+  function msg(t, bad) { var e = $("t-msg"); e.textContent = t; e.style.color = bad ? "var(--bad)" : ""; }
+  function onIndex(name, buf) {
+    toSheets(name, buf, function (sheets, err) {
+      if (!sheets) return msg(err, true);
+      var got = loadIndex(name, sheets);
+      if (!got) return msg("'" + name + "'에서 날짜 열과 지수 열을 찾지 못했습니다. 첫 열이 주차(날짜), 다음 열부터 복종별 지수인지 확인하세요.", true);
+      S.idx = got.idx; S.demo = false; S.src = name + (sheets.length > 1 ? " · '" + got.sheet + "' 시트" : "");
+      if (S.salesSrc === "") S.sales = null;
+      S.sel = null;
+      msg("지수 " + got.idx.names.length + "개 복종, " + got.idx.weeks.length + "주를 읽었습니다: " + got.idx.names.join(", "));
+      render();
+    });
+  }
+  function onSales(name, buf) {
+    toSheets(name, buf, function (sheets, err) {
+      if (!sheets) return msg(err, true);
+      var p = loadSales(sheets);
+      if (!p) return msg("'" + name + "'에서 주차·복종·판매수량을 찾지 못했습니다.", true);
+      S.sales = p; S.salesSrc = name;
+      var hit = p.names.filter(function (nm) { return S.idx.names.some(function (x) { return nk(x) === nk(nm); }); });
+      msg("판매수량 " + p.names.length + "개 복종을 읽었고, 지수와 이름이 맞는 " + hit.length + "개를 연결했습니다" + (hit.length < p.names.length ? " (안 맞는 이름: " + p.names.filter(function (x) { return hit.indexOf(x) < 0; }).join(", ") + ")" : "") + ".", !hit.length);
+      render();
+    });
+  }
+  function readInput(input, fn) {
+    var f = input.files && input.files[0];
+    if (!f) return;
+    var fr = new FileReader();
+    fr.onload = function () { fn(f.name, fr.result); };
+    fr.onerror = function () { msg("파일을 읽지 못했습니다.", true); };
+    fr.readAsArrayBuffer(f);
+    input.value = "";
+  }
+  function useDemo() { var d = demo(); S.idx = d.idx; S.sales = d.sales; S.demo = true; S.src = ""; S.salesSrc = ""; S.sel = null; msg(""); render(); }
+
+  // ---------- 탭과 ② 연결
+  function showTab(which) {
+    ["trend", "reorder"].forEach(function (k) {
+      var on = k === which;
+      $("tab-" + k).hidden = !on;
+      $("tb-" + k).setAttribute("aria-selected", on ? "true" : "false");
+      $("tb-" + k).tabIndex = on ? 0 : -1;
+    });
+    try { localStorage.setItem("md-board-tab", which); } catch (e) { /* 저장 불가 환경 */ }
+  }
+  var prevGrowth = null;
+  function hideBanner() { $("link-banner").hidden = true; prevGrowth = null; }
+  $("t-apply").addEventListener("click", function () {
+    var r = selRow(); if (!r || !isFinite(r.weekly)) return;
+    var g = $("growth");
+    if (prevGrowth == null) prevGrowth = g.value;
+    g.value = (r.weekly * 100).toFixed(1);
+    g.dispatchEvent(new Event("input", { bubbles: true }));
+    var b = $("link-banner");
+    b.innerHTML = "<span>주간 판매 변화율 <b>" + sp(r.weekly, 1) + "</b>를 ① 판매추이의 <b>" + U.esc(r.name) + "</b> 예측(" + (S.demo ? "가상 데이터, " : "") + "향후 " + S.H +
+      "주)에서 가져왔습니다. 남은 시즌(주)이 예측 기간과 크게 다르면 예측 기간을 맞춰 다시 가져오세요.</span>";
+    var undo = document.createElement("button");
+    undo.type = "button"; undo.className = "ghost"; undo.textContent = "원래 값(" + prevGrowth + "%)으로 되돌리기";
+    undo.addEventListener("click", function () { g.value = prevGrowth; g.dispatchEvent(new Event("input", { bubbles: true })); hideBanner(); });
+    b.appendChild(undo);
+    b.hidden = false;
+    showTab("reorder");
+    window.scrollTo(0, 0);
+  });
+  $("preset").addEventListener("change", hideBanner);
+  ["trend", "reorder"].forEach(function (k) { $("tb-" + k).addEventListener("click", function () { showTab(k); }); });
+  document.querySelector(".tabs").addEventListener("keydown", function (e) {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    var next = $("tb-trend").getAttribute("aria-selected") === "true" ? "reorder" : "trend";
+    showTab(next); $("tb-" + next).focus();
+  });
+  $("t-table").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-n]"); if (tr) select(tr.getAttribute("data-n")); });
+  $("t-table").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var tr = e.target.closest("tr[data-n]"); if (!tr) return;
+    e.preventDefault(); select(tr.getAttribute("data-n"));
+  });
+  $("t-minis").addEventListener("click", function (e) { var b = e.target.closest(".mini"); if (b) { select(b.dataset.n); $("t-d-title").scrollIntoView({ block: "start", behavior: "smooth" }); } });
+  $("t-h").addEventListener("input", function (e) { S.H = +e.target.value; render(); });
+  $("t-demo").addEventListener("click", useDemo);
+  $("f-index").addEventListener("change", function (e) { readInput(e.target, onIndex); });
+  $("f-sales").addEventListener("change", function (e) { readInput(e.target, onSales); });
+
+  useDemo();
+  var saved = null;
+  try { saved = localStorage.getItem("md-board-tab"); } catch (e) { /* 저장 불가 환경 */ }
+  showTab(saved === "reorder" ? "reorder" : "trend");
+  window.__trend = { onIndex: onIndex, onSales: onSales, state: S, forecast: forecast, parseWide: parseWide, parseLong: parseLong, parseCSV: parseCSV };
+})();
+</script>
+</body>
+</html>

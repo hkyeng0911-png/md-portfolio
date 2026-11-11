@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>기획MD 업무 도구 포트폴리오</title>
+<style>
+:root { --bg: #F3F5F8; --surface: #FFFFFF; --ink: #1A2130; --muted: #5A6476; --line: #DCE1E9; --accent: #2E4A86 }
+@media (prefers-color-scheme: dark) { :root { --bg: #10141B; --surface: #171E2B; --ink: #E5E9F0; --muted: #98A2B5; --line: #283246; --accent: #91AAE6 } }
+* { box-sizing: border-box }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; line-height: 1.6; padding: 32px 16px 48px }
+main { max-width: 920px; margin: 0 auto }
+h1 { font-size: 1.6rem; margin: 0 0 6px }
+.sub { color: var(--muted); margin: 0 0 6px }
+.note { font-size: .85rem; color: var(--muted); margin: 0 0 24px }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px }
+a.card { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; color: inherit; text-decoration: none }
+a.card:hover, a.card:focus-visible { border-color: var(--accent) }
+a.card img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; object-position: top; border-bottom: 1px solid var(--line) }
+a.card div { padding: 14px 16px 16px }
+a.card b { display: block; font-size: 1.02rem; margin-bottom: 4px }
+a.card span { font-size: .88rem; color: var(--muted) }
+footer { margin-top: 28px; font-size: .85rem; color: var(--muted) }
+footer a { color: var(--accent) }
+</style>
+</head>
+<body>
+<main>
+  <h1>기획MD 업무 도구 포트폴리오</h1>
+  <p class="sub">반복되는 판단과 수작업을 줄이기 위해 직접 만든 도구들입니다.</p>
+  <p class="note">모든 화면은 포트폴리오용 예시(가상) 데이터입니다.</p>
+  <div class="grid">
+    <a class="card" href="sales-trend-reorder/">
+      <img src="docs/trend.jpg" alt="판매추이 예측 화면">
+      <div><b>판매추이 예측 · 리오더 판단 보드</b><span>네이버 데이터랩 지수로 복종별 추세를 예측하고, 리오더 수량과 할인율별 손익분기점을 계산합니다.</span></div>
+    </a>
+    <a class="card" href="survey-result-demo/public/">
+      <img src="docs/survey.jpg" alt="매니저 의견 취합 결과 화면">
+      <div><b>시즌 상품 매니저 의견 취합 결과</b><span>매장 매니저의 신상품 반응을 품번별·복종별·매장등급별로 모아 보여줍니다.</span></div>
+    </a>
+  </div>
+  <footer>코드와 설명: <a href="https://github.com/hkyeng0911-png/md-portfolio">github.com/hkyeng0911-png/md-portfolio</a></footer>
+</main>
+</body>
+</html>

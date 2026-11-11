@@ -1,0 +1,702 @@
+{
+ "asof": "2026-11-03 (가상)",
+ "top": {
+  "DEMOAP900P": [
+   {
+    "store": "백화점 I점",
+    "qty": 17,
+    "rank": 1
+   },
+   {
+    "store": "대리점 D점",
+    "qty": 4,
+    "rank": 2
+   },
+   {
+    "store": "아울렛 J점",
+    "qty": 2,
+    "rank": 3
+   }
+  ],
+  "DEMOAP001P": [
+   {
+    "store": "백화점 B점",
+    "qty": 12,
+    "rank": 1
+   },
+   {
+    "store": "서브 B점",
+    "qty": 10,
+    "rank": 2
+   },
+   {
+    "store": "서브 A점",
+    "qty": 2,
+    "rank": 3
+   }
+  ],
+  "DEMOAT002P": [
+   {
+    "store": "아울렛 F점",
+    "qty": 12,
+    "rank": 1
+   },
+   {
+    "store": "서브 D점",
+    "qty": 11,
+    "rank": 2
+   },
+   {
+    "store": "할인점 D점",
+    "qty": 9,
+    "rank": 3
+   }
+  ],
+  "DEMODJ003P": [
+   {
+    "store": "아울렛 G점",
+    "qty": 15,
+    "rank": 1
+   },
+   {
+    "store": "백화점 J점",
+    "qty": 11,
+    "rank": 2
+   },
+   {
+    "store": "아울렛 I점",
+    "qty": 7,
+    "rank": 3
+   }
+  ],
+  "DEMODP004P": [
+   {
+    "store": "백화점 F점",
+    "qty": 7,
+    "rank": 1
+   },
+   {
+    "store": "백화점 I점",
+    "qty": 3,
+    "rank": 2
+   },
+   {
+    "store": "대리점 C점",
+    "qty": 2,
+    "rank": 3
+   }
+  ],
+  "DEMODP005P": [
+   {
+    "store": "아울렛 A점",
+    "qty": 14,
+    "rank": 1
+   },
+   {
+    "store": "백화점 B점",
+    "qty": 10,
+    "rank": 2
+   },
+   {
+    "store": "할인점 E점",
+    "qty": 9,
+    "rank": 3
+   }
+  ],
+  "DEMODW006P": [
+   {
+    "store": "백화점 G점",
+    "qty": 16,
+    "rank": 1
+   },
+   {
+    "store": "백화점 B점",
+    "qty": 10,
+    "rank": 2
+   },
+   {
+    "store": "백화점 D점",
+    "qty": 3,
+    "rank": 3
+   }
+  ],
+  "DEMOJP007P": [
+   {
+    "store": "서브 B점",
+    "qty": 15,
+    "rank": 1
+   },
+   {
+    "store": "아울렛 A점",
+    "qty": 6,
+    "rank": 2
+   },
+   {
+    "store": "할인점 A점",
+    "qty": 5,
+    "rank": 3
+   }
+  ],
+  "DEMOLI008P": [
+   {
+    "store": "대리점 B점",
+    "qty": 17,
+    "rank": 1
+   },
+   {
+    "store": "서브 F점",
+    "qty": 12,
+    "rank": 2
+   },
+   {
+    "store": "백화점 E점",
+    "qty": 8,
+    "rank": 3
+   }
+  ],
+  "DEMOKC009P": [
+   {
+    "store": "아울렛 E점",
+    "qty": 16,
+    "rank": 1
+   },
+   {
+    "store": "백화점 H점",
+    "qty": 13,
+    "rank": 2
+   },
+   {
+    "store": "대리점 A점",
+    "qty": 11,
+    "rank": 3
+   }
+  ],
+  "DEMOKT010P": [
+   {
+    "store": "할인점 B점",
+    "qty": 11,
+    "rank": 1
+   },
+   {
+    "store": "대리점 D점",
+    "qty": 9,
+    "rank": 2
+   },
+   {
+    "store": "아울렛 G점",
+    "qty": 2,
+    "rank": 3
+   }
+  ],
+  "DEMOSH011P": [
+   {
+    "store": "대리점 B점",
+    "qty": 15,
+    "rank": 1
+   },
+   {
+    "store": "할인점 A점",
+    "qty": 7,
+    "rank": 2
+   },
+   {
+    "store": "백화점 G점",
+    "qty": 2,
+    "rank": 3
+   }
+  ],
+  "DEMOTJ012P": [
+   {
+    "store": "서브 A점",
+    "qty": 13,
+    "rank": 1
+   },
+   {
+    "store": "아울렛 C점",
+    "qty": 11,
+    "rank": 2
+   },
+   {
+    "store": "할인점 E점",
+    "qty": 9,
+    "rank": 3
+   }
+  ],
+  "DEMOTS013P": [
+   {
+    "store": "아울렛 B점",
+    "qty": 13,
+    "rank": 1
+   },
+   {
+    "store": "할인점 B점",
+    "qty": 8,
+    "rank": 2
+   },
+   {
+    "store": "서브 G점",
+    "qty": 5,
+    "rank": 3
+   }
+  ],
+  "DEMOTS014P": [
+   {
+    "store": "대리점 C점",
+    "qty": 17,
+    "rank": 1
+   },
+   {
+    "store": "할인점 F점",
+    "qty": 15,
+    "rank": 2
+   },
+   {
+    "store": "백화점 B점",
+    "qty": 8,
+    "rank": 3
+   }
+  ],
+  "DEMOTP015P": [
+   {
+    "store": "백화점 A점",
+    "qty": 15,
+    "rank": 1
+   },
+   {
+    "store": "아울렛 I점",
+    "qty": 3,
+    "rank": 2
+   },
+   {
+    "store": "아울렛 C점",
+    "qty": 2,
+    "rank": 3
+   }
+  ],
+  "DEMOPT016P": [
+   {
+    "store": "서브 C점",
+    "qty": 17,
+    "rank": 1
+   },
+   {
+    "store": "할인점 D점",
+    "qty": 12,
+    "rank": 2
+   },
+   {
+    "store": "아울렛 H점",
+    "qty": 2,
+    "rank": 3
+   }
+  ],
+  "DEMOAP017P": [
+   {
+    "store": "할인점 F점",
+    "qty": 16,
+    "rank": 1
+   },
+   {
+    "store": "백화점 J점",
+    "qty": 8,
+    "rank": 2
+   },
+   {
+    "store": "아울렛 G점",
+    "qty": 2,
+    "rank": 3
+   }
+  ],
+  "DEMOAT018P": [
+   {
+    "store": "서브 A점",
+    "qty": 12,
+    "rank": 1
+   },
+   {
+    "store": "할인점 F점",
+    "qty": 11,
+    "rank": 2
+   },
+   {
+    "store": "아울렛 A점",
+    "qty": 6,
+    "rank": 3
+   }
+  ],
+  "DEMODJ019P": [
+   {
+    "store": "아울렛 A점",
+    "qty": 12,
+    "rank": 1
+   },
+   {
+    "store": "백화점 G점",
+    "qty": 8,
+    "rank": 2
+   },
+   {
+    "store": "대리점 B점",
+    "qty": 4,
+    "rank": 3
+   }
+  ],
+  "DEMODP020P": [
+   {
+    "store": "대리점 C점",
+    "qty": 11,
+    "rank": 1
+   },
+   {
+    "store": "서브 D점",
+    "qty": 9,
+    "rank": 2
+   },
+   {
+    "store": "할인점 B점",
+    "qty": 5,
+    "rank": 3
+   }
+  ],
+  "DEMODP021P": [
+   {
+    "store": "아울렛 J점",
+    "qty": 16,
+    "rank": 1
+   },
+   {
+    "store": "할인점 F점",
+    "qty": 14,
+    "rank": 2
+   },
+   {
+    "store": "대리점 A점",
+    "qty": 9,
+    "rank": 3
+   }
+  ],
+  "DEMODW022P": [
+   {
+    "store": "아울렛 I점",
+    "qty": 14,
+    "rank": 1
+   },
+   {
+    "store": "대리점 A점",
+    "qty": 6,
+    "rank": 2
+   },
+   {
+    "store": "백화점 E점",
+    "qty": 4,
+    "rank": 3
+   }
+  ],
+  "DEMOJP023P": [
+   {
+    "store": "아울렛 J점",
+    "qty": 13,
+    "rank": 1
+   },
+   {
+    "store": "백화점 H점",
+    "qty": 10,
+    "rank": 2
+   },
+   {
+    "store": "할인점 F점",
+    "qty": 4,
+    "rank": 3
+   }
+  ],
+  "DEMOLI024P": [
+   {
+    "store": "백화점 J점",
+    "qty": 15,
+    "rank": 1
+   },
+   {
+    "store": "백화점 F점",
+    "qty": 11,
+    "rank": 2
+   },
+   {
+    "store": "백화점 I점",
+    "qty": 6,
+    "rank": 3
+   }
+  ],
+  "DEMOKC025P": [
+   {
+    "store": "백화점 L점",
+    "qty": 11,
+    "rank": 1
+   },
+   {
+    "store": "대리점 A점",
+    "qty": 10,
+    "rank": 2
+   },
+   {
+    "store": "서브 B점",
+    "qty": 4,
+    "rank": 3
+   }
+  ],
+  "DEMOKT026P": [
+   {
+    "store": "할인점 B점",
+    "qty": 15,
+    "rank": 1
+   },
+   {
+    "store": "백화점 B점",
+    "qty": 10,
+    "rank": 2
+   },
+   {
+    "store": "아울렛 D점",
+    "qty": 4,
+    "rank": 3
+   }
+  ],
+  "DEMOSH027P": [
+   {
+    "store": "아울렛 J점",
+    "qty": 16,
+    "rank": 1
+   },
+   {
+    "store": "할인점 F점",
+    "qty": 13,
+    "rank": 2
+   },
+   {
+    "store": "백화점 H점",
+    "qty": 11,
+    "rank": 3
+   }
+  ],
+  "DEMOTJ028P": [
+   {
+    "store": "서브 A점",
+    "qty": 16,
+    "rank": 1
+   },
+   {
+    "store": "아울렛 A점",
+    "qty": 10,
+    "rank": 2
+   },
+   {
+    "store": "서브 G점",
+    "qty": 7,
+    "rank": 3
+   }
+  ],
+  "DEMOTS029P": [
+   {
+    "store": "백화점 F점",
+    "qty": 11,
+    "rank": 1
+   },
+   {
+    "store": "대리점 B점",
+    "qty": 10,
+    "rank": 2
+   },
+   {
+    "store": "서브 A점",
+    "qty": 7,
+    "rank": 3
+   }
+  ],
+  "DEMOTS030P": [
+   {
+    "store": "백화점 C점",
+    "qty": 16,
+    "rank": 1
+   },
+   {
+    "store": "아울렛 F점",
+    "qty": 14,
+    "rank": 2
+   },
+   {
+    "store": "할인점 A점",
+    "qty": 3,
+    "rank": 3
+   }
+  ],
+  "DEMOTP031P": [
+   {
+    "store": "할인점 C점",
+    "qty": 15,
+    "rank": 1
+   },
+   {
+    "store": "백화점 D점",
+    "qty": 14,
+    "rank": 2
+   },
+   {
+    "store": "백화점 E점",
+    "qty": 13,
+    "rank": 3
+   }
+  ],
+  "DEMOPT032P": [
+   {
+    "store": "백화점 I점",
+    "qty": 17,
+    "rank": 1
+   },
+   {
+    "store": "할인점 D점",
+    "qty": 11,
+    "rank": 2
+   },
+   {
+    "store": "아울렛 B점",
+    "qty": 4,
+    "rank": 3
+   }
+  ],
+  "DEMOAP033P": [
+   {
+    "store": "백화점 D점",
+    "qty": 10,
+    "rank": 1
+   },
+   {
+    "store": "백화점 A점",
+    "qty": 6,
+    "rank": 2
+   },
+   {
+    "store": "대리점 B점",
+    "qty": 3,
+    "rank": 3
+   }
+  ],
+  "DEMOAT034P": [
+   {
+    "store": "아울렛 B점",
+    "qty": 12,
+    "rank": 1
+   },
+   {
+    "store": "백화점 L점",
+    "qty": 6,
+    "rank": 2
+   },
+   {
+    "store": "백화점 C점",
+    "qty": 5,
+    "rank": 3
+   }
+  ],
+  "DEMODJ035P": [
+   {
+    "store": "아울렛 D점",
+    "qty": 6,
+    "rank": 1
+   },
+   {
+    "store": "아울렛 C점",
+    "qty": 4,
+    "rank": 2
+   },
+   {
+    "store": "서브 E점",
+    "qty": 2,
+    "rank": 3
+   }
+  ],
+  "DEMODP036P": [
+   {
+    "store": "서브 E점",
+    "qty": 14,
+    "rank": 1
+   },
+   {
+    "store": "백화점 J점",
+    "qty": 13,
+    "rank": 2
+   },
+   {
+    "store": "서브 D점",
+    "qty": 11,
+    "rank": 3
+   }
+  ],
+  "DEMODP037P": [
+   {
+    "store": "아울렛 G점",
+    "qty": 12,
+    "rank": 1
+   },
+   {
+    "store": "서브 A점",
+    "qty": 10,
+    "rank": 2
+   },
+   {
+    "store": "백화점 D점",
+    "qty": 7,
+    "rank": 3
+   }
+  ],
+  "DEMODW038P": [
+   {
+    "store": "아울렛 B점",
+    "qty": 15,
+    "rank": 1
+   },
+   {
+    "store": "백화점 F점",
+    "qty": 14,
+    "rank": 2
+   },
+   {
+    "store": "백화점 J점",
+    "qty": 2,
+    "rank": 3
+   }
+  ],
+  "DEMOJP039P": [
+   {
+    "store": "백화점 I점",
+    "qty": 15,
+    "rank": 1
+   },
+   {
+    "store": "백화점 H점",
+    "qty": 5,
+    "rank": 2
+   },
+   {
+    "store": "아울렛 K점",
+    "qty": 3,
+    "rank": 3
+   }
+  ],
+  "DEMOLI040P": [
+   {
+    "store": "할인점 D점",
+    "qty": 9,
+    "rank": 1
+   },
+   {
+    "store": "아울렛 I점",
+    "qty": 6,
+    "rank": 2
+   },
+   {
+    "store": "백화점 F점",
+    "qty": 3,
+    "rank": 3
+   }
+  ]
+ }
+}

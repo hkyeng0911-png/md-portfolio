@@ -12,18 +12,18 @@
 :root {
   --bg: #F3F5F8; --surface: #FFFFFF; --ink: #1A2130; --muted: #5A6476; --line: #DCE1E9;
   --accent: #2E4A86; --accent-soft: #E4EAF6; --good: #1D7A52; --good-soft: #E1F2E9;
-  --warn: #A86A12; --warn-soft: #FBF0DC; --bad: #B23A3A; --bad-soft: #F8E3E3; --bar: #A9B9D9;
+  --warn: #A86A12; --warn-soft: #FBF0DC; --bad: #B23A3A; --bad-soft: #F8E3E3; --bar: #A9B9D9; --warm: #D2552B; --cold: #2F7BD8;
   --f-body: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
   --f-num: "IBM Plex Mono", ui-monospace, "Consolas", monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #10141B; --surface: #171E2B; --ink: #E5E9F0; --muted: #98A2B5; --line: #283246;
   --accent: #91AAE6; --accent-soft: #212E4A; --good: #52C28D; --good-soft: #17322A;
-  --warn: #E2AE52; --warn-soft: #3A2E17; --bad: #EE7D7D; --bad-soft: #3A1E22; --bar: #3E5384; color-scheme: dark } }
+  --warn: #E2AE52; --warn-soft: #3A2E17; --bad: #EE7D7D; --bad-soft: #3A1E22; --bar: #3E5384; --warm: #F08A5D; --cold: #7FB2F0; color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #10141B; --surface: #171E2B; --ink: #E5E9F0; --muted: #98A2B5; --line: #283246;
   --accent: #91AAE6; --accent-soft: #212E4A; --good: #52C28D; --good-soft: #17322A;
-  --warn: #E2AE52; --warn-soft: #3A2E17; --bad: #EE7D7D; --bad-soft: #3A1E22; --bar: #3E5384; color-scheme: dark }
+  --warn: #E2AE52; --warn-soft: #3A2E17; --bad: #EE7D7D; --bad-soft: #3A1E22; --bar: #3E5384; --warm: #F08A5D; --cold: #7FB2F0; color-scheme: dark }
 * { box-sizing: border-box }
 body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.55;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px }
@@ -107,6 +107,14 @@ details.card summary { cursor: pointer; font-weight: 700 }
 details.card ol { margin: 10px 0 0; padding-left: 20px; color: var(--muted); font-size: .84rem }
 details.card li { margin-bottom: 6px }
 #tab-reorder > .layout { margin-top: 0 }
+.wk { margin: 12px 0 0; padding-left: 20px }
+.wk li { margin-bottom: 8px; line-height: 1.65; font-size: .9rem }
+.wk li b:first-child { color: var(--accent) }
+.wk-act { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center }
+.wk-act .lbl { font-size: .78rem; font-weight: 700; color: var(--muted) }
+button.chip { background: var(--accent-soft); color: var(--accent); padding: 5px 11px; font-size: .8rem; border-radius: 999px }
+ol.howto { margin: 10px 0 0; padding-left: 20px; color: var(--muted); font-size: .84rem }
+ol.howto li { margin-bottom: 6px }
 </style>
 </head>
 <body>
@@ -125,69 +133,58 @@ details.card li { margin-bottom: 6px }
   </nav>
 
   <section id="tab-trend" class="panel" role="tabpanel" aria-labelledby="tb-trend">
+    <section class="card" aria-labelledby="wk-h">
+      <div class="row" style="justify-content:space-between;align-items:baseline">
+        <h2 id="wk-h" style="margin:0;font-size:1.15rem">금주의 분석</h2>
+        <span class="row"><span id="t-pill" class="pill warn">가상 데이터</span><span class="note" id="wk-date" style="margin:0"></span><button type="button" class="ghost" id="wk-data">데이터 바꾸기 ↓</button></span>
+      </div>
+      <ul class="wk" id="wk-list"></ul>
+      <div class="wk-act" id="wk-act"></div>
+    </section>
+
     <section class="card">
-      <div class="ctrl">
-        <div>
-          <span id="t-pill" class="pill warn">가상 데이터</span>
-          <p class="big" id="t-src" style="font-size:1.1rem">—</p>
-          <p class="desc" id="t-meta" style="margin:0">—</p>
+      <h2>복종별 추세 요약</h2>
+      <p class="desc">향후 변화가 큰 순서입니다. 행을 누르면 아래 상세가 그 복종으로 바뀝니다. '주평균 변화율'이 ② 리오더 판단에 들어가는 값입니다.</p>
+      <div class="tbl"><table id="t-table"><thead><tr>
+        <th>복종</th><th>추세</th><th>최근 4주<br>전년 대비</th><th id="t-h-th">향후 16주<br>변화</th><th>주평균<br>변화율</th><th>예측 피크</th><th>기온 영향</th><th>1°C 따뜻할 때<br>지수 변화</th><th>예측<br>신뢰도</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-d-title">
+      <div class="row" style="justify-content:space-between;align-items:start">
+        <div style="flex:1 1 360px"><h2 id="t-d-title">—</h2><p class="desc" id="t-d-desc" style="margin:0">—</p></div>
+        <div class="row" style="align-items:end">
+          <label for="w-city" style="min-width:110px">기온 지역<select id="w-city"></select></label>
+          <button type="button" id="t-apply">리오더 판단하기 →</button>
         </div>
+      </div>
+      <div class="facts" id="t-facts" style="margin-top:12px"></div>
+      <div id="t-chart"></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>복종 지수 금년 (왼쪽 축)</span><span><i style="background:var(--accent);opacity:.45"></i>지수 전년 같은 주</span><span><i style="background:var(--warn)"></i>주평균 기온 금년 (오른쪽 축)</span><span><i style="background:var(--warn);opacity:.45"></i>기온 전년</span><span><i style="background:var(--warm)"></i>아래 띠: 전년보다 따뜻</span><span><i style="background:var(--cold)"></i>전년보다 추움</span><span>연한 구간 = 예측·예보</span></div>
+      <p class="desc" style="margin:16px 0 6px"><b>월별로 보면</b></p>
+      <div class="tbl"><table id="w-month"><thead><tr><th>월</th><th>기온 금년</th><th>전년</th><th>차이</th><th>지수 전년 대비</th><th style="text-align:left">해석</th></tr></thead><tbody></tbody></table></div>
+      <p class="note" id="w-src"></p>
+    </section>
+
+    <section class="card" id="t-data">
+      <div class="ctrl">
+        <div><h2 style="margin-bottom:6px">데이터</h2><p class="desc" style="margin:0"><b id="t-src">—</b><br><span id="t-meta">—</span></p></div>
         <div class="ctrl-in">
-          <label for="f-index">지수 데이터 올리기<input id="f-index" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt"><span>Colab 결과 엑셀 · 데이터랩 다운로드 · CSV</span></label>
-          <label for="f-sales">판매수량 올리기 (선택)<input id="f-sales" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt"><span>열: 주차, 복종, 판매수량</span></label>
+          <label for="f-index">네이버 데이터랩 지수 올리기<input id="f-index" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt"><span>Colab 결과 엑셀 · 데이터랩 다운로드 · CSV</span></label>
           <label for="t-h">예측 기간 <output id="t-h-out" for="t-h">16주</output><input id="t-h" type="range" min="4" max="26" step="1" value="16"></label>
           <button type="button" class="ghost" id="t-demo">가상 데이터로 보기</button>
         </div>
       </div>
       <p class="note" id="t-msg" role="status" aria-live="polite"></p>
-      <div class="kpis" id="t-kpis" style="margin-top:12px"></div>
+      <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:600">데이터 준비 방법</summary>
+        <ol class="howto">
+          <li><b>Colab 코드로 수집(권장)</b> — <code>colab_복종별_판매추이예측.py</code>에 네이버 API 키를 넣어 실행하고, 내려받은 <code>복종별_판매추이예측.xlsx</code>를 그대로 올리세요.</li>
+          <li><b>데이터랩 웹에서 직접</b> — datalab.naver.com에서 기간 단위 '주간'으로 조회해 엑셀로 내려받아 올리세요.</li>
+          <li><b>직접 만든 표</b> — 첫 열 주차(날짜), 다음 열부터 복종별 지수.</li>
+          <li>기온은 Open-Meteo 기상 자료를 자동으로 불러옵니다. 올린 파일은 브라우저 안에서만 처리되고 어디로도 보내지지 않습니다.</li>
+        </ol>
+      </details>
     </section>
-
-    <section class="card">
-      <h2>복종별 추세 요약</h2>
-      <p class="desc">최근 대비 변화가 큰 순서입니다. 행을 누르면 아래 상세 그래프가 바뀝니다. 검증오차가 단순예측 오차보다 작아야 계절 패턴 예측을 믿을 수 있습니다(크면 빨간색).</p>
-      <div class="tbl"><table id="t-table"><thead><tr>
-        <th>복종</th><th>추세</th><th>최근 4주<br>지수</th><th>전년 동기<br>대비</th><th id="t-h-th">향후 16주<br>평균 지수</th><th>최근 대비<br>변화</th><th>주평균<br>변화율</th><th>예측 피크</th><th>검증오차</th><th>단순예측<br>오차</th><th>판매연계<br>R²</th><th>예측 판매<br>(장)</th>
-      </tr></thead><tbody></tbody></table></div>
-    </section>
-
-    <section class="card">
-      <div class="row" style="justify-content:space-between;align-items:start">
-        <div style="flex:1 1 360px"><h2 id="t-d-title">—</h2><p class="desc" id="t-d-desc" style="margin:0">—</p></div>
-        <button type="button" id="t-apply">이 변화율로 리오더 판단하기 →</button>
-      </div>
-      <div class="facts" id="t-facts" style="margin-top:12px"></div>
-      <div id="t-chart"></div>
-      <div class="legend" id="t-legend"></div>
-    </section>
-
-    <section class="card" aria-labelledby="w-h">
-      <div class="row" style="justify-content:space-between;align-items:start">
-        <div style="flex:1 1 360px"><h2 id="w-h">날씨 · 주평균 기온 전년 비교</h2><p class="desc" id="w-desc" style="margin:0">기온 데이터를 불러오는 중입니다.</p></div>
-        <label for="w-city" style="min-width:150px">지역<select id="w-city"></select></label>
-      </div>
-      <div class="facts" id="w-facts" style="margin-top:12px"></div>
-      <div id="w-chart"></div>
-      <div class="legend"><span><i style="background:var(--accent)"></i>금년 주평균 기온</span><span><i style="background:transparent;border:2px dashed var(--accent);box-sizing:border-box"></i>금년 예보</span><span><i style="background:var(--muted);opacity:.6"></i>전년 같은 주</span><span><i style="background:var(--warn)"></i>10°C 기준선</span></div>
-      <p class="note" id="w-src"></p>
-    </section>
-
-    <section class="card">
-      <h2>전체 복종 한눈에 보기</h2>
-      <p class="desc">최근 1년 실적(실선)과 예측(점선). 누르면 위 상세 그래프로 바뀝니다.</p>
-      <div class="minis" id="t-minis"></div>
-    </section>
-
-    <details class="card">
-      <summary>데이터 준비 방법</summary>
-      <ol>
-        <li><b>Colab 코드로 수집(권장)</b> — <code>colab_복종별_판매추이예측.py</code>에 네이버 API 키를 넣어 실행하고, 내려받은 <code>복종별_판매추이예측.xlsx</code>를 그대로 올리세요. '지수실적' 시트를 읽어 이 화면에서 다시 예측합니다.</li>
-        <li><b>데이터랩 웹에서 직접</b> — datalab.naver.com 검색어트렌드·쇼핑인사이트에서 기간 단위를 '주간'으로 조회하고 엑셀로 내려받아 올리세요. 날짜 열과 키워드 열이 있는 표는 자동으로 인식합니다.</li>
-        <li><b>직접 만든 표</b> — 첫 열 주차(날짜), 다음 열부터 복종별 지수인 CSV·엑셀.</li>
-        <li><b>판매수량(선택)</b> — 열 이름 <code>주차, 복종, 판매수량</code>. 복종 이름이 지수 데이터와 같아야 연결됩니다. 연결되면 지수로 판매량을 추정한 R²와 예측 판매수량이 나옵니다.</li>
-        <li>네이버 API는 키가 드러나지 않도록 서버(Colab)에서 호출해야 해서, 이 화면은 수집된 결과를 올려 보는 방식입니다. 올린 파일은 이 브라우저 안에서만 처리되고 어디로도 전송·저장되지 않습니다.</li>
-      </ol>
-    </details>
   </section>
 
   <div id="tab-reorder" role="tabpanel" aria-labelledby="tb-reorder" hidden>
@@ -644,21 +641,20 @@ details.card li { margin-bottom: 6px }
 })();
 </script>
 <script>
-// ① 복종별 판매추이: 네이버 데이터랩 지수(주간) → 전년 동주 패턴 × 최근 성장률 예측 → ② 리오더 판단의 주간 변화율로 연결
+// ① 복종별 판매추이: 네이버 데이터랩 지수(주간) 예측 + 기온(Open-Meteo) 전년 비교 → 금주의 분석 → ② 리오더 판단으로 연결
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   var U = window.__ui;
   var DAY = 864e5, WEEK = 7 * DAY;
   var XLSX_URL = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-  var S = { idx: null, sales: null, demo: true, src: "", salesSrc: "", H: 16, sel: null, rows: [] };
+  var S = { idx: null, demo: true, src: "", H: 16, sel: null, rows: [] };
 
   // ---------- 날짜·숫자
   function utc(y, m, d) { return Date.UTC(y, m - 1, d); }
   function monday(t) { return t - ((new Date(t).getUTCDay() + 6) % 7) * DAY; }
   function fmtD(t) { var d = new Date(t); return (d.getUTCMonth() + 1) + "/" + d.getUTCDate(); }
   function fmtFull(t) { var d = new Date(t); return d.getUTCFullYear() + "." + String(d.getUTCMonth() + 1).padStart(2, "0") + "." + String(d.getUTCDate()).padStart(2, "0"); }
-  function fmtYM(t) { var d = new Date(t); return String(d.getUTCFullYear()).slice(2) + "." + String(d.getUTCMonth() + 1).padStart(2, "0"); }
   function parseDate(v) {
     if (v == null || v === "") return null;
     if (v instanceof Date) { if (isNaN(v)) return null; var x = new Date(v.getTime() + 12 * 3600e3); return utc(x.getFullYear(), x.getMonth() + 1, x.getDate()); }
@@ -674,12 +670,15 @@ details.card li { margin-bottom: 6px }
   }
   function num(v) { if (typeof v === "number") return v; if (v == null || v instanceof Date) return NaN; var s = String(v).replace(/[,%\s]/g, ""); return s === "" ? NaN : Number(s); }
   function nk(s) { return String(s).replace(/\s/g, "").toLowerCase(); }
-  function mean(a) { var s = 0, n = 0; for (var i = 0; i < a.length; i++) if (isFinite(a[i])) { s += a[i]; n++; } return n ? s / n : NaN; }
+  function mean(a) { var s = 0, n = 0; for (var i = 0; i < a.length; i++) if (a[i] != null && isFinite(a[i])) { s += a[i]; n++; } return n ? s / n : NaN; }
   function sum(a, i, j) { var s = 0; for (var k = i; k < j; k++) s += a[k]; return s; }
   function sp(v, d) { return isFinite(v) ? (v > 0 ? "+" : "") + (v * 100).toFixed(d || 0) + "%" : "—"; }
   function cls(v) { return isFinite(v) ? (v > 0.005 ? "pos" : (v < -0.005 ? "neg" : "")) : ""; }
+  function deg(v) { return v == null || !isFinite(v) ? "—" : v.toFixed(1) + "°C"; }
+  function sdeg(v) { return v == null || !isFinite(v) ? "—" : (v > 0 ? "+" : "") + v.toFixed(1) + "°C"; }
+  var esc = U.esc;
 
-  // ---------- 파일 읽기
+  // ---------- 파일 읽기 (지수)
   function parseCSV(text) {
     var first = text.split(/\r?\n/, 1)[0] || "", cnt = function (re) { return (first.match(re) || []).length; };
     var delim = cnt(/\t/g) > cnt(/,/g) ? "\t" : (cnt(/;/g) > cnt(/,/g) ? ";" : ",");
@@ -716,10 +715,8 @@ details.card li { margin-bottom: 6px }
       } catch (e) { cb(null, "엑셀 파일을 해석하지 못했습니다 (" + e.message + ")."); }
     });
   }
-
-  // 넓은 표: 날짜 열 + 값 열들. 데이터랩 다운로드처럼 (날짜, 값) 쌍이 반복돼도 인식
   var DATE_HDR = /날짜|일자|주차|기간|date|period|week/i;
-  function parseWide(rows, agg) {
+  function parseWide(rows) {   // 날짜 열 + 값 열들. 데이터랩 다운로드처럼 (날짜, 값) 쌍이 반복돼도 인식
     var first = -1, dcols = null;
     for (var i = 0; i < rows.length && first < 0; i++) {
       var r = rows[i] || [], ds = [], hasNum = false;
@@ -760,30 +757,17 @@ details.card li { margin-bottom: 6px }
       var ks = Object.keys(acc[o.name]);
       if (!ks.length) return;
       data[o.name] = {};
-      ks.forEach(function (k) { var b = acc[o.name][k]; data[o.name][k] = agg === "sum" ? b.s : b.s / b.n; });
+      ks.forEach(function (k) { var b = acc[o.name][k]; data[o.name][k] = b.s / b.n; });
       names.push(o.name);
     });
     return names.length ? { names: names, data: data } : null;
   }
-  // 긴 표: 주차, 복종, 판매수량
-  function parseLong(rows) {
+  function looksLong(rows) {   // '주차, 복종, 판매수량' 같은 긴 표(판매 파일)는 지수로 읽지 않음
     for (var i = 0; i < Math.min(rows.length, 10); i++) {
-      var h = (rows[i] || []).map(function (v) { return v == null ? "" : String(v).trim(); });
-      var dc = h.findIndex(function (x) { return /주차|날짜|일자|date|week/i.test(x); });
-      var nc = h.findIndex(function (x) { return /복종|품목|아이템|카테고리|item|category/i.test(x); });
-      var qc = h.findIndex(function (x) { return /판매|수량|qty|sales/i.test(x) && !/금액|가$|단가/.test(x); });
-      if (dc < 0 || nc < 0 || qc < 0) continue;
-      var data = {}, names = [];
-      for (var r = i + 1; r < rows.length; r++) {
-        var row = rows[r] || [], t = parseDate(row[dc]), nm = row[nc] == null ? "" : String(row[nc]).trim(), q = num(row[qc]);
-        if (t == null || !nm || !isFinite(q)) continue;
-        var w = monday(t);
-        if (!data[nm]) { data[nm] = {}; names.push(nm); }
-        data[nm][w] = (data[nm][w] || 0) + q;
-      }
-      return names.length ? { names: names, data: data } : null;
+      var h = (rows[i] || []).map(function (v) { return v == null ? "" : String(v); });
+      if (h.some(function (x) { return /복종|품목|아이템/.test(x); }) && h.some(function (x) { return /판매|수량/.test(x); })) return true;
     }
-    return null;
+    return false;
   }
   function toIndex(p) {
     var lo = Infinity, hi = -Infinity;
@@ -799,22 +783,15 @@ details.card li { margin-bottom: 6px }
     names.forEach(function (nm) { series[nm] = series[nm].map(function (v) { return v * 100 / mx; }); });
     return { weeks: weeks, names: names, series: series };
   }
-  function loadIndex(name, sheets) {
+  function loadIndex(sheets) {
     var order = sheets.slice().sort(function (a, b) { var sc = function (s) { return /지수실적|실적/.test(s.name) ? 0 : (/예측|요약|연계/.test(s.name) ? 2 : 1); }; return sc(a) - sc(b); });
     for (var i = 0; i < order.length; i++) {
       if (/예측|요약|연계/.test(order[i].name) && order.length > 1) continue;
-      if (parseLong(order[i].rows)) continue;
-      var p = parseWide(order[i].rows, "mean");
+      if (looksLong(order[i].rows)) continue;
+      var p = parseWide(order[i].rows);
       if (!p) continue;
       var idx = toIndex(p);
       if (idx.names.length && idx.weeks.length >= 12) return { idx: idx, sheet: order[i].name };
-    }
-    return null;
-  }
-  function loadSales(sheets) {
-    for (var i = 0; i < sheets.length; i++) {
-      var p = parseLong(sheets[i].rows) || parseWide(sheets[i].rows, "sum");
-      if (p) return p;
     }
     return null;
   }
@@ -849,40 +826,21 @@ details.card li { margin-bottom: 6px }
     var b = sxy / sxx;
     return { a: my - b * mx, b: b, r2: sxy * sxy / (sxx * syy), n: n };
   }
-  function salesFor(name) {
-    if (!S.sales) return null;
-    for (var i = 0; i < S.sales.names.length; i++) if (nk(S.sales.names[i]) === nk(name)) return S.sales.data[S.sales.names[i]];
-    return null;
-  }
   function compute() {
     var idx = S.idx, H = S.H, n = idx.weeks.length, last = idx.weeks[n - 1];
     return idx.names.map(function (nm) {
       var s = idx.series[nm], f = forecast(s, H), bt = backtest(s, H);
       var recent4 = mean(s.slice(-4)), ly4 = n >= 56 ? mean(s.slice(n - 56, n - 52)) : NaN, fMean = mean(f);
       var pk = 0; f.forEach(function (v, i) { if (v > f[pk]) pk = i; });
-      var r = { name: nm, s: s, f: f, recent4: recent4, yoy: ly4 > 0 ? recent4 / ly4 - 1 : NaN, fMean: fMean,
-        chg: recent4 > 0 ? fMean / recent4 - 1 : NaN, wape: bt.wape, naive: bt.naive, peak: last + (pk + 1) * WEEK,
-        weekly: f[0] > 0 && f[H - 1] > 0 ? Math.pow(f[H - 1] / f[0], 1 / Math.max(H - 1, 1)) - 1 : NaN, link: null, hist: null, salesF: null };
-      var sd = salesFor(nm);
-      if (sd) {
-        r.hist = idx.weeks.map(function (w) { var v = sd[w]; return isFinite(v) ? v : null; });
-        [0, 1].forEach(function (lag) {
-          var xs = [], ys = [];
-          for (var i = lag; i < n; i++) if (r.hist[i] != null) { xs.push(s[i - lag]); ys.push(r.hist[i]); }
-          if (xs.length < 8) return;
-          var m = fit(xs, ys);
-          if (m && (!r.link || m.r2 > r.link.r2)) { m.lag = lag; r.link = m; }
-        });
-        if (r.link) {
-          var all = s.concat(f);
-          r.salesF = f.map(function (v, h) { return Math.max(0, Math.round(r.link.a + r.link.b * all[n + h - r.link.lag])); });
-        }
-      }
-      return r;
+      var rel = bt.wape <= bt.naive * 0.8 ? "높음" : (bt.wape <= bt.naive ? "보통" : "낮음");
+      return { name: nm, s: s, f: f, recent4: recent4, yoy: ly4 > 0 ? recent4 / ly4 - 1 : NaN, fMean: fMean,
+        chg: recent4 > 0 ? fMean / recent4 - 1 : NaN, wape: bt.wape, naive: bt.naive, rel: rel, peak: last + (pk + 1) * WEEK,
+        weekly: f[0] > 0 && f[H - 1] > 0 ? Math.pow(f[H - 1] / f[0], 1 / Math.max(H - 1, 1)) - 1 : NaN };
     }).sort(function (a, b) { return (isFinite(b.chg) ? b.chg : -9) - (isFinite(a.chg) ? a.chg : -9); });
   }
+  function selRow() { return S.rows.filter(function (r) { return r.name === S.sel; })[0]; }
 
-  // ---------- 가상 데이터 (API 키 없이 화면 시연용)
+  // ---------- 가상 지수 (API 키 없이 화면 시연용)
   function demo() {
     var seed = 7;
     var rnd = function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -891,88 +849,181 @@ details.card li { margin-bottom: 6px }
     var now = new Date(), today = utc(now.getFullYear(), now.getMonth() + 1, now.getDate());
     var lastMon = monday(today) - WEEK, N = 156, weeks = [];
     for (var i = 0; i < N; i++) weeks.push(lastMon - (N - 1 - i) * WEEK);
-    // [복종, 피크 주차, 시즌 폭(주), 비시즌 바닥, 연간 추세 방향]
     var spec = [["코트", 47, 6, 8, 1], ["패딩", 50, 5, 6, -0.6], ["후드집업", 44, 11, 30, 1], ["점퍼", 42, 6, 10, -0.6],
       ["니트", 45, 7, 10, 1], ["가디건", 40, 7, 12, -0.6], ["데님팬츠", 37, 12, 40, 1], ["맨투맨", 41, 9, 20, -0.6]];
-    var series = {}, names = [], mx = 0, sales = { names: [], data: {} };
-    spec.forEach(function (sp1) {
+    var series = {}, names = [], mx = 0;
+    spec.forEach(function (q) {
       var s = weeks.map(function (w, i) {
-        var d = Math.abs(isoWeek(w) - sp1[1]); d = Math.min(d, 52 - d);
-        var season = Math.exp(-Math.pow(d / sp1[2], 2));
-        return Math.max(0, (sp1[3] + (100 - sp1[3]) * season) * (1 + 0.12 * i / 52 * sp1[4]) * (1 + 0.08 * gauss()));
+        var d = Math.abs(isoWeek(w) - q[1]); d = Math.min(d, 52 - d);
+        return Math.max(0, (q[3] + (100 - q[3]) * Math.exp(-Math.pow(d / q[2], 2))) * (1 + 0.12 * i / 52 * q[4]) * (1 + 0.08 * gauss()));
       });
-      series[sp1[0]] = s; names.push(sp1[0]); mx = Math.max(mx, Math.max.apply(null, s));
+      series[q[0]] = s; names.push(q[0]); mx = Math.max(mx, Math.max.apply(null, s));
     });
-    names.forEach(function (nm) {
-      series[nm] = series[nm].map(function (v) { return v * 100 / mx; });
-      var k = 20 + 40 * rnd();
-      sales.names.push(nm); sales.data[nm] = {};
-      weeks.slice(-52).forEach(function (w, i) { sales.data[nm][w] = Math.max(0, Math.round(series[nm][N - 52 + i] * k * (1 + 0.12 * gauss()))); });
-    });
-    return { idx: { weeks: weeks, names: names, series: series }, sales: sales };
+    names.forEach(function (nm) { series[nm] = series[nm].map(function (v) { return v * 100 / mx; }); });
+    return { weeks: weeks, names: names, series: series };
   }
 
-  // ---------- 그래프
-  function chartDetail(r) {
-    var n = r.s.length, H = r.f.length, win = Math.min(n, 104), i0 = n - win, N = win + H;
-    var W = 920, Ht = 300, L = 44, R = r.hist ? 56 : 14, T = 18, B = 34;
-    var svg = U.svgEl(W, Ht, r.name + " 지수 실적과 예측 그래프");
-    var val = function (i) { return i < n ? r.s[i] : r.f[i - n]; };
-    var ly = function (i) { return i - 52 >= 0 ? val(i - 52) : null; };
-    var wk = function (i) { return S.idx.weeks[0] + i * WEEK; };
-    var top = 1, i;
-    for (i = i0; i < n + H; i++) top = Math.max(top, val(i), ly(i) || 0);
-    var yt = U.niceTicks(0, top * 1.05, 5), hi = yt[yt.length - 1], step = (W - L - R) / Math.max(1, N - 1);
-    var X = function (k) { return L + (k - i0) * step; }, Y = function (v) { return T + (Ht - T - B) * (hi - v) / hi; };
-    U.add(svg, "rect", { x: X(n - 0.5), y: T, width: W - R - X(n - 0.5), height: Ht - T - B, fill: "var(--accent-soft)", opacity: 0.55 });
-    U.add(svg, "text", { x: X(n - 0.5) + 6, y: T + 12, style: "fill:var(--accent);font-weight:600" }, "예측 " + H + "주");
-    yt.forEach(function (t) {
-      U.add(svg, "line", { x1: L, x2: W - R, y1: Y(t), y2: Y(t), class: "axis", "stroke-width": t === 0 ? 1 : 0.6 });
-      U.add(svg, "text", { x: L - 6, y: Y(t) + 4, "text-anchor": "end" }, U.won(t));
+  // ---------- 기온 (Open-Meteo 재분석·예보, 실패 시 저장본)
+  var CITIES = { "서울": [37.5665, 126.978], "대전": [36.3504, 127.3845], "대구": [35.8714, 128.6014], "광주": [35.1595, 126.8526], "부산": [35.1796, 129.0756] };
+  var WSNAP = /*__WEATHER__*/{"asof":"2026-11-11","start":"2025-05-19","cities":{"서울":[15.1,20.5,23.5,21.9,19.6,15.2,16.0,18.6,19.9,19.4,20.6,22.6,22.1,22.6,20.8,20.7,20.3,21.3,23.5,22.9,24.6,23.4,21.2,22.0,25.1,23.9,25.1,25.4,22.7,23.6,24.6,26.9,23.0,21.2,21.4,23.5,24.0,20.9,21.8,23.1,24.8,25.8,26.3,26.3,26.1,26.5,26.0,26.8,27.2,27.9,30.0,30.8,30.7,29.4,30.3,27.3,23.7,22.2,22.4,23.4,24.0,23.8,26.5,26.9,26.9,27.3,27.9,29.8,32.1,32.8,31.9,32.5,32.2,31.7,31.3,31.2,30.0,26.9,27.0,25.8,26.3,25.6,24.3,25.6,25.4,26.6,24.7,24.9,26.4,26.9,26.6,27.2,27.4,27.4,28.2,28.1,29.0,30.0,28.5,25.9,25.8,26.5,27.1,26.8,26.4,24.8,24.2,25.7,24.7,26.2,25.7,24.1,23.1,23.1,23.3,23.9,22.5,22.6,23.3,24.0,23.3,22.1,21.2,18.8,19.1,20.1,19.6,20.6,20.8,21.5,20.4,21.4,20.1,19.2,18.7,18.8,20.4,20.4,21.0,20.6,18.0,18.3,20.4,19.1,17.0,20.0,18.3,15.8,16.5,18.8,19.4,18.5,15.6,14.0,9.3,8.5,11.4,13.9,14.4,13.2,12.1,6.6,6.4,9.2,10.6,12.8,11.7,7.5,5.0,7.8,9.5,10.6,11.7,12.2,11.7,7.4,7.4,8.6,9.4,7.3,7.4,9.4,3.2,0.6,1.4,5.7,5.7,7.6,9.0,10.9,6.6,4.7,4.5,1.2,3.8,10.1,4.7,-1.0,-6.8,-5.3,-5.4,0.3,4.3,1.1,0.3,2.5,2.5,-0.1,0.9,-1.0,-0.6,1.0,1.5,-0.2,1.2,5.3,-2.4,-2.6,0.2,0.5,-4.5,-9.3,-4.2,0.6,3.1,-1.9,-6.1,-8.2,-9.2,-5.8,-1.4,-2.9,-3.0,-1.3,-5.7,-1.9,0.7,-7.3,-5.6,-4.1,-5.3,2.1,0.9,-1.7,-1.0,-4.7,-10.4,-11.0,-10.6,-8.0,-7.3,-8.2,-7.2,-5.7,-6.8,-6.6,-7.8,-6.4,-3.8,-3.5,-3.2,0.8,1.7,-6.7,-8.7,-9.1,-5.2,-0.5,1.1,0.6,3.1,4.3,4.5,0.3,-0.7,1.1,-0.4,3.1,7.5,6.9,0.4,0.4,4.3,4.8,7.1,6.2,6.6,3.7,4.5,4.5,3.8,1.0,-0.6,-0.2,2.7,1.5,2.5,4.8,5.3,5.6,5.2,5.0,5.3,5.1,4.1,5.2,5.5,7.6,9.1,10.3,10.9,10.1,9.8,10.1,11.3,12.9,13.3,11.5,9.7,12.6,13.6,10.3,9.7,6.7,8.3,8.9,9.9,10.0,12.2,15.7,17.6,16.8,17.3,16.1,17.5,20.3,12.4,11.0,13.3,16.0,16.6,17.2,16.4,14.8,12.6,13.3,15.8,17.0,16.2,12.7,13.0,13.2,15.4,14.8,14.8,15.6,16.9,16.0,18.4,17.9,23.0,24.6,23.9,22.9,23.4,22.3,17.6,17.2,19.3,17.7,20.4,22.9,23.3,21.0,20.2,20.2,20.6,22.8,22.9,25.5,25.8,22.9,20.2,21.9,22.2,21.5,22.1,20.6,20.8,22.2,24.3,24.1,25.5,27.7,27.2,26.9,26.9,21.6,22.6,23.2,23.9,22.6,21.3,22.6,26.1,26.2,26.2,26.9,26.3,23.8,25.0,26.2,25.4,24.9,25.8,25.4,23.9,24.4,27.8,29.5,29.2,28.0,24.9,25.6,26.5,24.8,25.2,24.3,25.0,25.3,25.3,27.5,27.3,26.5,26.1,27.5,27.6,27.3,28.1,29.0,29.6,30.9,32.0,31.9,33.3,33.5,29.4,27.4,28.5,27.9,26.0,27.0,28.0,25.0,24.7,24.7,26.6,26.7,26.4,24.4,24.0,26.7,27.5,26.8,27.1,26.8,25.8,26.2,24.8,23.6,23.1,24.3,25.2,23.7,22.8,22.9,23.3,24.1,21.4,18.8,20.0,20.6,21.3,22.1,20.7,21.7,22.6,23.5,24.0,23.6,24.2,24.1,23.9,22.7,20.2,21.1,21.4,20.3,20.5,21.4,17.7,16.1,16.9,19.1,16.4,15.8,16.9,17.4,18.4,19.2,21.5,22.7,18.2,14.2,15.7,17.6,18.4,18.0,13.8,15.5,12.5,8.8,12.5,14.7,16.6,15.6,11.2,6.9,7.4,11.3,10.9,7.9,9.7,9.6,10.9,12.2,6.9,3.8,4.1,7.2,5.4,8.7,10.7,11.7,10.1,9.9,10.1,9.3,7.2,1.2,4.3,6.3,8.3,1.2,4.1,6.0,6.9],"대전":[17.9,23.9,25.1,21.8,18.9,17.0,17.6,19.1,20.3,20.8,20.0,21.1,20.7,22.1,19.6,21.1,20.7,21.2,24.0,24.3,25.0,25.8,23.8,23.0,25.2,21.4,22.5,25.0,23.7,23.9,24.2,25.7,24.5,21.9,21.9,23.5,21.7,21.4,22.6,24.7,26.1,27.4,27.7,27.5,28.1,27.4,26.8,27.6,28.4,30.0,30.5,30.5,29.8,28.9,28.6,25.7,23.1,22.8,23.2,24.5,25.2,24.9,27.8,27.1,27.3,27.7,29.0,29.2,29.9,31.4,31.4,31.3,31.2,30.2,30.6,31.1,28.5,27.6,28.0,27.1,26.6,25.5,24.2,25.3,24.2,23.7,26.5,27.0,27.7,27.5,27.5,28.0,28.3,28.7,29.5,29.3,29.7,30.3,29.6,25.6,26.6,27.2,28.1,28.6,28.0,26.6,25.3,25.9,25.9,28.3,27.8,25.2,22.2,21.3,23.8,24.4,22.6,24.8,24.6,24.7,25.2,23.8,21.5,21.0,20.6,20.7,20.1,21.3,22.9,22.5,21.2,22.3,21.4,20.2,18.8,19.6,20.2,18.9,21.6,21.3,20.3,20.5,21.5,21.2,21.4,21.7,21.5,18.8,18.7,20.2,19.9,20.1,17.1,17.0,11.0,11.4,12.9,15.6,14.9,14.4,13.1,8.6,8.4,9.0,10.1,12.3,12.8,10.0,6.3,9.4,10.2,10.6,12.3,13.0,12.8,8.6,7.7,8.3,9.6,8.1,8.8,9.7,5.6,2.1,3.8,7.5,6.4,8.0,9.6,12.0,7.8,6.2,5.6,3.7,5.1,11.9,7.5,1.8,-3.4,-2.0,-2.0,2.9,8.6,4.3,1.9,3.9,6.1,1.9,2.9,1.1,1.8,5.9,5.2,1.9,4.2,8.2,-0.1,-0.7,1.2,2.8,-1.5,-6.5,-1.9,3.5,5.2,0.0,-3.3,-5.8,-6.0,-3.0,1.8,-0.4,-1.5,1.1,-4.0,0.4,2.7,-4.8,-1.4,-0.1,-0.8,6.7,2.6,1.5,1.4,-1.1,-6.4,-6.8,-7.2,-3.3,-3.1,-4.2,-3.7,-2.2,-4.1,-2.9,-4.7,-3.5,-1.1,-1.5,-1.7,1.8,4.1,-3.3,-6.0,-6.7,-2.2,0.6,2.2,1.7,3.9,5.4,5.2,1.4,1.0,1.9,0.9,4.4,9.2,9.0,2.6,0.6,4.0,7.0,7.5,6.5,8.1,5.2,6.8,5.4,6.4,2.5,0.9,1.5,2.3,2.9,3.9,5.0,5.4,6.1,6.3,6.5,8.0,6.3,5.3,6.0,7.1,9.0,10.6,11.4,12.5,12.3,12.3,12.2,13.5,13.4,13.7,12.4,10.5,14.0,12.5,10.6,11.0,7.3,8.3,10.7,11.7,12.6,14.5,17.1,16.5,17.3,17.8,14.3,17.0,19.5,13.8,11.3,13.1,15.1,15.7,16.6,17.0,16.8,14.4,14.1,16.0,15.9,17.1,13.7,13.5,13.9,16.6,16.7,15.3,15.6,16.9,18.4,17.1,19.1,21.5,21.6,21.9,22.4,22.7,22.3,16.6,17.7,19.6,18.6,20.5,23.1,23.6,22.2,21.6,20.6,21.5,23.9,24.0,23.6,25.1,23.7,21.4,22.5,23.6,21.6,22.4,21.6,21.0,22.2,23.9,23.8,24.4,25.8,24.9,25.3,24.9,22.6,23.1,22.0,21.6,21.4,22.5,23.4,25.7,26.1,26.4,26.4,22.7,24.4,25.0,26.2,24.7,25.7,27.1,25.3,24.4,26.6,28.6,29.4,29.4,28.9,26.5,25.7,26.4,26.2,26.6,26.3,27.1,26.8,27.3,28.1,28.3,28.3,28.3,28.4,28.7,27.9,28.5,30.1,30.8,31.9,31.5,31.5,32.3,32.6,28.7,28.5,28.9,26.9,25.8,26.5,26.8,25.2,23.7,25.0,27.2,26.3,26.2,24.7,25.8,28.0,28.6,27.5,28.6,27.3,25.9,25.6,24.7,24.2,25.9,24.5,25.3,24.3,23.3,23.1,22.9,23.2,22.1,19.8,20.6,21.8,22.2,21.2,20.9,21.9,22.1,23.7,23.3,23.0,22.8,23.9,22.9,22.5,20.0,20.5,21.5,20.9,21.0,21.5,18.2,16.4,16.6,19.9,17.4,15.9,16.9,16.8,17.8,19.2,21.1,22.4,18.9,14.2,14.8,16.4,18.5,19.9,16.6,15.8,13.8,10.2,14.0,15.1,16.7,17.7,13.2,7.9,9.0,13.3,13.1,8.4,10.2,9.9,10.4,11.1,8.8,5.1,5.9,7.0,6.4,8.0,9.2,11.2,11.8,13.2,11.0,11.4,8.7,3.3,5.9,7.8,10.9,3.0,5.0,6.8,7.7],"대구":[19.2,24.0,24.0,18.0,16.7,14.5,17.6,19.4,21.3,20.8,19.1,18.5,20.0,22.8,20.3,21.7,22.1,23.5,23.5,25.3,26.3,26.4,26.8,25.4,26.6,21.1,22.2,25.5,24.5,24.5,25.4,26.4,25.5,23.7,22.2,24.4,21.2,23.2,24.0,25.9,27.7,28.6,29.2,29.7,31.5,31.9,31.2,31.2,31.0,32.2,29.9,28.8,28.0,27.0,26.9,25.9,23.6,23.3,23.8,25.0,24.8,24.8,26.9,27.2,28.2,29.5,29.4,29.2,30.1,30.7,31.9,31.4,30.3,30.5,31.0,32.1,30.3,28.7,28.9,28.4,28.0,27.1,24.9,25.4,24.5,22.7,27.1,28.8,28.9,29.4,29.3,30.3,30.7,30.8,30.1,30.6,32.2,32.1,31.3,30.4,29.6,29.2,31.5,32.1,28.7,27.4,27.1,27.1,26.8,27.8,28.9,27.6,24.7,22.6,22.8,23.2,23.2,25.1,24.2,25.8,26.9,26.1,21.9,21.2,21.8,20.7,20.1,20.9,23.9,23.5,23.1,22.5,22.0,21.0,19.8,20.5,20.9,19.2,20.9,22.5,20.6,21.2,21.4,20.0,20.0,22.0,20.3,18.5,18.6,19.8,20.0,19.6,18.5,17.8,13.9,14.1,15.1,14.8,14.6,16.3,14.3,9.5,8.0,9.2,10.5,12.3,13.1,11.1,8.7,11.5,12.4,13.0,13.8,13.1,14.3,10.2,8.7,9.4,11.5,10.0,9.8,11.0,7.1,2.9,4.5,7.8,7.8,8.3,8.8,12.0,8.1,7.4,7.2,4.8,4.9,10.8,9.5,4.3,-1.9,-1.6,-0.4,1.4,7.5,6.8,2.7,3.9,7.1,3.1,3.1,1.7,2.0,3.4,6.1,3.3,5.5,9.0,1.6,0.5,3.1,5.5,-0.2,-5.8,-1.4,2.3,5.1,1.7,-2.2,-5.2,-5.6,-2.2,2.9,1.1,-0.0,1.9,-3.1,-0.3,3.7,-3.6,-2.9,1.4,-0.6,6.9,5.4,5.3,4.8,1.8,-3.5,-5.8,-6.6,-2.7,-2.0,-2.5,-2.2,-0.9,-2.7,-1.7,-3.7,-2.0,-0.7,-1.5,0.1,2.8,5.3,0.9,-3.8,-6.1,-1.1,0.8,3.4,3.6,5.1,7.4,8.3,4.3,4.0,4.0,3.4,6.4,9.1,12.3,4.7,2.3,5.3,8.1,7.7,6.4,8.0,6.4,6.9,5.9,7.8,5.3,2.2,3.1,3.6,4.3,6.1,6.1,5.3,6.3,7.8,8.9,10.9,8.7,8.3,9.0,10.9,12.0,12.1,12.4,12.9,15.3,16.5,15.1,15.0,14.4,13.1,12.6,13.0,14.5,14.2,12.9,12.7,8.8,10.2,11.9,15.5,14.5,16.0,17.0,14.3,16.8,14.8,13.2,19.5,20.6,18.5,15.2,15.2,15.6,15.0,18.3,20.2,21.0,18.2,15.6,16.3,15.9,20.3,15.0,14.8,16.2,18.4,20.6,17.3,18.2,20.1,20.3,18.9,21.1,20.4,22.0,24.7,26.2,26.5,24.9,16.4,18.3,18.3,17.4,20.1,22.5,23.9,20.4,22.7,22.6,24.5,27.0,26.0,21.7,24.5,25.0,23.9,23.5,21.6,22.0,23.1,24.0,23.8,24.7,26.5,26.2,25.6,25.7,25.6,27.4,26.2,25.4,24.2,20.6,19.9,20.5,21.9,23.1,23.3,25.1,25.8,26.7,21.9,23.7,24.5,25.4,25.6,26.5,27.7,27.4,27.1,29.1,31.3,31.3,31.2,30.4,30.6,29.2,27.9,27.6,26.1,27.8,29.4,29.6,29.7,30.9,31.1,30.9,31.7,31.1,31.6,31.1,32.0,33.3,33.9,33.6,31.2,31.3,30.7,31.6,27.9,27.7,27.2,25.9,26.3,28.0,29.8,28.4,23.8,25.1,27.1,26.3,26.7,25.5,26.6,28.8,29.8,29.8,30.4,26.8,25.6,26.3,25.7,26.9,27.0,26.3,24.9,24.0,23.3,23.8,23.5,22.8,21.5,20.5,23.0,23.4,24.3,24.4,23.4,22.8,22.7,22.8,22.9,22.6,22.3,22.3,23.4,24.2,21.6,19.8,21.2,22.6,21.2,22.0,19.5,17.2,17.8,19.5,19.0,17.1,18.1,18.9,19.3,21.8,21.4,21.9,19.9,15.3,15.5,18.0,18.7,20.4,19.7,15.9,15.6,10.9,13.9,15.9,17.6,17.3,14.2,9.0,9.3,13.8,13.5,9.6,11.2,10.8,10.8,11.9,10.0,6.0,7.2,8.2,8.5,10.2,11.3,12.2,11.4,13.4,11.3,11.6,10.3,3.4,6.9,7.9,11.2,3.9,4.9,6.9,9.1],"광주":[17.9,22.4,22.8,21.3,18.8,17.7,17.1,18.6,19.6,21.2,21.2,21.1,19.9,21.4,18.5,19.4,19.9,21.1,22.9,24.0,25.4,25.2,23.3,23.3,25.3,21.6,23.1,23.3,23.0,23.6,23.6,24.3,24.5,22.2,21.2,23.2,21.7,22.2,22.5,24.5,26.9,26.9,27.7,28.2,28.6,28.4,27.5,28.2,29.1,29.6,31.1,31.3,31.0,30.8,30.1,25.4,23.8,23.9,23.9,24.8,25.9,24.9,27.2,27.2,27.2,28.1,28.5,28.9,29.8,30.8,30.4,30.9,30.0,30.8,30.7,31.0,28.1,27.7,27.4,27.5,27.3,25.5,24.0,25.1,24.5,22.9,26.9,27.3,27.8,27.3,26.9,27.0,28.2,28.7,29.3,29.8,29.6,29.8,29.7,26.6,27.8,28.9,29.4,29.5,28.3,27.5,25.3,25.9,26.9,27.1,27.7,26.1,22.3,21.3,24.0,24.7,24.0,24.9,24.9,24.6,25.9,25.4,23.3,22.7,22.4,21.6,21.1,21.8,24.2,23.2,24.1,23.0,22.0,20.5,19.1,19.2,19.9,18.8,22.1,22.6,22.7,22.5,22.7,22.5,21.6,21.7,22.1,22.0,21.4,20.3,21.0,20.5,18.2,16.9,12.4,12.2,14.0,15.3,15.2,14.7,13.9,10.9,9.8,9.9,10.8,12.8,13.7,11.6,7.9,11.3,12.2,12.5,13.7,13.6,13.8,10.2,9.0,9.4,10.5,9.6,10.0,10.8,8.2,5.2,6.0,8.1,8.2,7.3,8.6,12.4,8.7,7.4,7.0,6.1,6.6,11.4,8.4,4.5,0.4,1.5,1.3,2.6,8.3,6.9,4.2,5.8,8.3,3.6,4.4,3.7,4.0,5.4,6.2,3.1,6.8,9.8,2.3,0.8,5.3,5.8,0.6,-4.0,-0.9,3.8,5.6,1.9,-1.3,-4.0,-3.9,-1.1,1.8,1.3,-0.3,1.4,-1.5,1.2,4.3,-2.9,-1.0,1.7,1.3,8.0,4.2,3.4,3.9,0.6,-3.9,-4.0,-4.7,-1.4,-0.7,-1.7,-2.5,-0.5,-2.0,-1.3,-2.5,-1.5,-0.1,-1.1,-0.1,2.4,5.5,-0.9,-4.0,-6.0,-1.0,0.4,2.9,2.0,3.8,6.3,5.4,2.0,1.5,2.3,1.8,5.1,9.9,9.7,4.5,2.5,5.2,6.9,8.2,8.0,8.6,6.8,8.4,6.3,7.7,3.8,1.6,1.6,2.5,2.7,3.8,5.7,6.7,5.9,6.3,5.8,8.7,8.2,6.3,6.3,6.8,8.9,10.1,11.4,11.4,11.4,12.1,12.1,13.1,12.8,13.5,12.4,10.3,12.9,12.3,10.5,12.3,7.9,8.7,12.9,12.1,12.4,14.6,17.7,16.7,16.2,17.0,14.0,17.9,17.6,13.6,12.1,11.8,16.1,15.7,16.5,15.6,16.2,13.5,14.0,14.7,15.2,16.2,14.1,13.1,13.0,15.8,16.7,14.9,15.0,17.5,19.9,17.7,19.3,22.2,22.8,22.7,23.2,23.8,22.4,18.6,18.5,19.7,18.8,20.9,22.7,23.2,23.1,20.7,20.4,20.8,23.8,24.3,22.0,23.1,22.6,20.4,21.6,23.7,20.2,21.7,22.1,22.1,22.3,23.9,24.9,25.4,26.0,25.5,26.3,24.8,22.8,23.6,21.5,22.2,22.3,23.0,23.6,25.8,25.0,25.7,26.4,22.5,23.7,23.9,24.0,24.0,25.3,27.1,25.8,25.2,27.3,28.0,28.6,28.3,27.9,27.0,26.3,26.8,26.7,26.3,26.9,28.6,28.3,28.8,29.4,30.1,30.5,30.7,30.0,30.1,29.6,30.0,31.5,31.5,32.7,32.8,29.9,31.0,32.8,31.3,30.7,30.1,29.3,27.9,28.4,27.7,27.0,25.1,26.0,27.2,25.9,27.3,26.2,28.3,28.6,29.0,29.6,30.6,28.1,26.7,26.2,25.8,26.7,26.6,26.1,26.7,25.7,23.7,24.0,23.9,24.4,23.7,22.0,23.0,23.4,23.6,22.9,22.5,23.7,23.5,24.8,24.3,24.3,24.2,24.3,23.7,23.5,23.2,20.5,21.7,21.4,20.6,21.8,18.8,17.3,18.7,20.7,18.4,17.0,17.6,18.1,18.9,20.3,22.0,23.9,20.3,15.7,15.3,18.3,20.5,21.8,18.4,15.9,15.5,12.2,14.2,16.1,17.5,18.9,14.6,9.6,9.5,13.4,13.2,10.2,12.1,10.8,11.5,13.1,10.8,7.4,7.3,8.6,7.7,9.6,11.3,13.1,14.6,13.8,11.6,11.8,10.8,6.3,8.0,9.1,11.7,5.4,6.2,8.4,8.8],"부산":[17.4,21.2,22.4,17.8,16.2,14.2,15.4,16.7,17.8,19.0,18.7,18.2,19.5,19.9,18.4,19.9,21.0,20.9,20.5,21.7,22.8,21.4,23.3,24.2,21.9,20.4,21.4,22.8,22.5,22.2,23.4,24.0,23.3,23.2,21.7,23.2,20.4,22.0,22.9,24.9,25.9,26.4,26.8,27.1,28.9,29.2,28.4,28.6,29.4,30.4,29.1,27.7,27.2,26.3,25.9,26.2,23.9,23.5,24.4,25.1,24.0,24.2,26.8,26.8,27.7,27.9,27.4,28.3,29.1,29.6,29.8,29.1,28.8,28.9,28.9,29.5,28.5,28.0,28.0,28.1,28.7,26.2,24.4,23.5,23.7,22.3,26.4,27.3,28.4,28.6,28.1,27.8,28.0,28.1,28.9,29.4,30.0,29.5,29.1,28.6,27.7,27.9,28.8,29.8,26.4,25.9,26.5,25.9,26.7,26.6,26.9,28.2,26.8,22.9,23.2,23.9,24.2,25.1,24.3,25.8,26.4,26.6,22.7,22.2,23.6,21.0,21.2,21.6,24.2,23.1,23.5,22.5,22.7,21.2,19.6,20.8,20.8,19.1,21.6,21.9,21.0,22.3,21.9,20.6,20.6,21.7,20.8,20.4,18.9,20.5,20.8,20.3,20.2,17.6,16.0,14.8,16.0,16.2,15.6,16.6,14.5,10.0,7.9,9.4,12.0,13.1,12.6,11.2,9.3,12.6,12.6,13.8,14.5,15.3,14.4,9.8,8.8,10.6,10.9,9.8,9.4,10.6,7.8,3.2,3.1,5.8,6.7,6.5,6.8,10.1,7.7,7.6,8.8,5.0,4.9,11.8,10.0,5.4,0.4,-0.7,0.8,1.3,6.5,6.2,2.5,3.4,8.0,4.9,7.5,3.0,2.2,3.6,6.4,3.5,7.0,10.9,3.4,2.1,4.8,7.2,1.9,-4.9,-1.5,1.6,5.5,2.7,-1.3,-3.8,-4.3,-2.3,0.9,1.7,-0.1,1.7,-2.5,-0.9,6.1,-2.3,-2.0,3.7,0.5,9.4,6.7,5.8,5.8,3.2,-0.6,-4.0,-4.8,-2.1,-0.8,-1.5,-1.0,0.4,-1.4,-0.8,-2.6,-0.6,-0.9,-1.5,-0.3,3.0,5.0,4.0,-1.0,-4.9,-1.2,0.5,3.7,3.2,3.7,7.3,9.3,6.3,6.2,4.4,4.4,6.5,9.1,14.0,5.9,3.6,7.5,8.8,7.3,6.3,8.3,7.5,7.4,6.5,7.2,7.1,2.7,3.0,4.3,3.8,5.3,6.0,5.1,5.9,7.7,8.2,9.0,8.8,8.6,8.7,10.0,9.9,10.6,10.6,10.4,11.6,14.0,13.8,12.9,13.2,13.3,11.7,12.8,13.4,14.5,12.2,14.1,9.8,9.4,12.4,16.9,14.5,14.9,16.2,14.7,15.3,13.5,14.0,16.6,17.6,17.2,13.9,13.5,13.2,13.6,14.9,16.3,17.5,17.4,14.4,14.0,14.4,16.9,14.8,14.6,14.0,15.2,17.2,18.1,16.0,16.7,18.0,17.1,18.2,18.8,18.8,20.6,23.1,22.5,22.0,17.0,18.2,17.9,17.2,18.5,22.1,22.4,20.1,22.9,21.1,22.8,24.2,23.5,20.1,21.8,21.2,22.9,21.1,21.5,19.7,19.6,21.5,22.1,22.8,23.4,23.2,23.2,23.3,24.6,25.2,24.4,23.9,22.2,19.7,19.6,19.7,22.0,21.2,20.5,20.6,21.5,22.2,20.4,21.7,22.5,22.9,23.1,25.0,25.4,25.4,25.8,26.8,28.6,28.4,27.9,27.2,28.3,28.9,28.3,27.7,28.0,28.0,28.7,29.7,29.5,30.0,30.3,31.1,31.0,32.4,33.8,33.2,33.0,34.1,33.4,31.5,30.4,29.2,29.2,30.3,29.6,26.9,26.1,25.2,25.6,25.9,26.5,26.6,23.6,24.2,25.7,27.1,27.3,26.9,27.3,28.4,28.8,28.9,28.9,27.1,25.3,26.9,26.2,26.9,26.7,26.8,25.4,25.1,25.1,25.2,24.6,23.7,22.4,22.0,22.9,23.1,25.1,25.1,23.4,22.9,23.5,22.1,23.2,22.7,22.5,22.4,22.0,22.7,22.3,19.1,20.8,21.8,21.3,21.0,20.3,17.5,18.2,19.4,18.7,17.3,17.3,17.8,18.3,21.2,21.6,22.2,20.8,16.0,14.6,17.1,19.1,21.5,20.8,17.2,16.4,11.7,15.3,17.3,18.1,17.6,14.1,10.1,10.7,14.2,13.5,11.0,12.7,11.2,11.8,13.6,10.9,6.5,8.6,9.9,10.3,11.6,12.9,12.9,13.0,13.6,12.2,13.2,12.5,4.6,7.7,7.7,12.5,5.1,4.9,8.2,10.4]}};
+  var WX = { city: "서울", cache: {}, src: null };
+  function todayUTC() { var n = new Date(); return utc(n.getFullYear(), n.getMonth() + 1, n.getDate()); }
+  function isoD(t) { return new Date(t).toISOString().slice(0, 10); }
+  function winStart() { var w = S.idx.weeks; return w[Math.max(0, w.length - 26)]; }
+  function snapFor(city) {
+    if (!WSNAP || !WSNAP.cities[city]) return null;
+    var s0 = parseDate(WSNAP.start), map = {};
+    WSNAP.cities[city].forEach(function (v, i) { if (v != null) map[s0 + i * DAY] = v; });
+    return { map: map, now: parseDate(WSNAP.asof), live: false };
+  }
+  function fetchCity(city) {
+    var c = CITIES[city], now = todayUTC(), ly0 = Math.min(winStart(), monday(now) - 25 * WEEK) - 364 * DAY;
+    var base = "latitude=" + c[0] + "&longitude=" + c[1] + "&daily=temperature_2m_mean&timezone=Asia%2FSeoul";
+    var get = function (u) { return fetch(u).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }); };
+    return Promise.all([
+      get("https://api.open-meteo.com/v1/forecast?" + base + "&past_days=10&forecast_days=16"),
+      get("https://archive-api.open-meteo.com/v1/archive?" + base + "&start_date=" + isoD(ly0) + "&end_date=" + isoD(now - DAY))
+    ]).then(function (res) {
+      var map = {};
+      res.forEach(function (j) {   // 예보 먼저, 관측(재분석)으로 덮어씀
+        if (!j.daily) throw new Error(j.reason || "자료 없음");
+        j.daily.time.forEach(function (d, i) { var v = j.daily.temperature_2m_mean[i]; if (v != null) map[parseDate(d)] = v; });
+      });
+      return { map: map, now: now, live: true, ly0: ly0 };
     });
-    // 판매수량 (오른쪽 축)
-    var sv = function (k) { return k < n ? (r.hist ? r.hist[k] : null) : (r.salesF ? r.salesF[k - n] : null); };
-    if (r.hist) {
-      var smax = 1;
-      for (i = i0; i < n + H; i++) if (sv(i) != null) smax = Math.max(smax, sv(i));
-      var st = U.niceTicks(0, smax * 1.1, 4), shi = st[st.length - 1];
-      var YS = function (v) { return T + (Ht - T - B) * (shi - v) / shi; };
-      st.forEach(function (t) { U.add(svg, "text", { x: W - R + 6, y: YS(t) + 4 }, U.won(t)); });
-      for (i = i0; i < n + H; i++) {
-        var q = sv(i);
-        if (q == null) continue;
-        U.add(svg, "rect", { x: X(i) - step * 0.35, width: step * 0.7, y: YS(q), height: Math.max(0, YS(0) - YS(q)), fill: "var(--bar)", opacity: i < n ? 0.55 : 0.28 });
-      }
+  }
+  function loadWeather(city) {
+    WX.city = city;
+    var key = city + "|" + winStart(), snap = snapFor(city);
+    if (WX.cache[key]) { WX.src = WX.cache[key]; return render(); }
+    if (snap) { WX.src = snap; render(); } else render();
+    fetchCity(city).then(function (src) { WX.cache[key] = src; if (WX.city === city) { WX.src = src; render(); } })
+      .catch(function () { if (!snap) { WX.src = null; render(); } });
+  }
+  function tempAt(t) {
+    var src = WX.src, cur = [], ly = [], fc = 0;
+    if (!src) return { cur: null, ly: null, fc: false };
+    for (var k = 0; k < 7; k++) {
+      var d = t + k * DAY;
+      if (src.map[d] != null) { cur.push(src.map[d]); if (d > src.now) fc++; }
+      if (src.map[d - 364 * DAY] != null) ly.push(src.map[d - 364 * DAY]);
     }
-    for (i = i0; i < n + H; i++) {
-      var d = new Date(wk(i));
-      if (d.getUTCDate() <= 7 && d.getUTCMonth() % 3 === 0) {
-        U.add(svg, "line", { x1: X(i), x2: X(i), y1: Ht - B, y2: Ht - B + 4, class: "axis" });
-        U.add(svg, "text", { x: X(i), y: Ht - 12, "text-anchor": "middle" }, fmtYM(wk(i)));
-      }
+    return { cur: cur.length >= 4 ? mean(cur) : null, ly: ly.length >= 4 ? mean(ly) : null, fc: fc > 0 };
+  }
+  function chartRows(r) {   // 최근 26주 실적 + 예측 H주, 같은 주의 전년 지수·기온
+    var w = S.idx.weeks, n = w.length, out = [];
+    for (var p = Math.max(0, n - 26); p < n + S.H; p++) {
+      var t = w[0] + p * WEEK, tp = tempAt(t);
+      out.push({ t: t, icur: p < n ? r.s[p] : r.f[p - n], ily: p - 52 >= 0 && p - 52 < n ? r.s[p - 52] : null, ifc: p >= n, done: p < n, cur: tp.cur, ly: tp.ly, fc: tp.fc });
     }
-    var path = function (from, to, f) { var p = ""; for (var k = from; k <= to; k++) { var v = f(k); if (v == null) continue; p += (p ? "L" : "M") + X(k).toFixed(1) + " " + Y(v).toFixed(1); } return p; };
-    U.add(svg, "path", { d: path(i0, n + H - 1, ly), fill: "none", stroke: "var(--muted)", "stroke-width": 1.2, "stroke-dasharray": "2 3", opacity: 0.8 });
-    U.add(svg, "path", { d: path(i0, n - 1, val), fill: "none", stroke: "var(--accent)", "stroke-width": 2 });
-    U.add(svg, "path", { d: path(n - 1, n + H - 1, val), fill: "none", stroke: "var(--accent)", "stroke-width": 2.2, "stroke-dasharray": "6 4" });
-    // 마우스를 올리면 그 주의 값
+    return out;
+  }
+  function yoyRows(rows) { var a = 0, b = 0; rows.forEach(function (w) { if (w.icur != null && w.ily != null) { a += w.icur; b += w.ily; } }); return b > 0 ? a / b - 1 : NaN; }
+  function tdiff(rows) { return mean(rows.filter(function (w) { return w.cur != null && w.ly != null; }).map(function (w) { return w.cur - w.ly; })); }
+  function sensitivity(rows) {   // 주별 (기온 차이) → (지수 전년비) 기울기
+    var xs = [], ys = [];
+    rows.forEach(function (w) { if (w.cur != null && w.ly != null && w.icur != null && w.ily > 0) { xs.push(w.cur - w.ly); ys.push(Math.max(-1, Math.min(2, w.icur / w.ily - 1))); } });
+    if (xs.length < 6) return null;
+    var m = fit(xs, ys);
+    if (!m) return null;
+    var mx = mean(xs), sx = Math.sqrt(mean(xs.map(function (x) { return (x - mx) * (x - mx); })));
+    if (sx < 0.4) return null;
+    var r = (m.b >= 0 ? 1 : -1) * Math.sqrt(m.r2);
+    return { slope: m.b, r: r, n: xs.length, kind: m.b <= -0.03 && r <= -0.4 ? "cold" : (m.b >= 0.03 && r >= 0.4 ? "warm" : "none") };
+  }
+  function sensPill(se) {
+    if (!se) return '<span class="pill info">자료 부족</span>';
+    return se.kind === "cold" ? '<span class="pill bad">추워야 팔림</span>' : (se.kind === "warm" ? '<span class="pill warn">따뜻해야 팔림</span>' : '<span class="pill info">영향 작음</span>');
+  }
+  function firstBelow(rows, key, th) {   // 가을 들어 처음 주평균이 기준 아래로 내려간 주
+    var peak = -1;
+    rows.forEach(function (r, i) { if (r[key] != null && (peak < 0 || r[key] > rows[peak][key])) peak = i; });
+    for (var i = Math.max(peak, 0); i < rows.length; i++) if (rows[i][key] != null && rows[i][key] < th) return i;
+    return -1;
+  }
+  function readMonth(dT, dI, name) {
+    if (!isFinite(dT) || !isFinite(dI)) return "자료 부족";
+    if (dT >= 1 && dI <= -0.1) return "덜 추워서 " + name + " 수요가 늦어진 것으로 보입니다";
+    if (dT <= -1 && dI >= 0.1) return "더 추워서 " + name + " 수요가 빨리 왔습니다";
+    if (dT >= 1 && dI >= 0.1) return "따뜻했는데도 지수가 올라, 상품·행사 등 기온 외 요인이 큽니다";
+    if (dT <= -1 && dI <= -0.1) return "추웠는데도 지수가 낮아, 기온 외 원인을 확인하세요";
+    if (Math.abs(dT) < 1 && Math.abs(dI) >= 0.1) return "기온이 비슷해, 지수 변화는 기온 외 요인으로 보입니다";
+    if (Math.abs(dT) >= 1) return (dT > 0 ? "따뜻했지만" : "추웠지만") + " 지수 변화는 크지 않습니다";
+    return "기온·수요 모두 전년과 비슷합니다";
+  }
+
+  // ---------- 그래프: 왼쪽 축 = 지수, 오른쪽 축 = 기온, 아래 띠 = 전년 대비 기온 차이
+  function chartCombo(rows, name) {
+    var W = 920, Ht = 340, L = 46, R = 50, T = 24, PB = 268, S0 = 282, S1 = 304, n = rows.length;
+    var svg = U.svgEl(W, Ht, name + " 지수와 주평균 기온을 겹친 금년·전년 비교");
+    var step = (W - L - R) / Math.max(1, n - 1), X = function (i) { return L + i * step; };
+    var iv = [], tv = [];
+    rows.forEach(function (w) { [w.icur, w.ily].forEach(function (v) { if (v != null) iv.push(v); }); [w.cur, w.ly].forEach(function (v) { if (v != null) tv.push(v); }); });
+    var it = U.niceTicks(0, Math.max(1, Math.max.apply(null, iv.length ? iv : [1])), 4), ihi = it[it.length - 1];
+    var hasT = tv.length > 0, tlo = 0, tstep = 10, thi = 40;
+    if (hasT) {
+      var tt = U.niceTicks(Math.floor(Math.min.apply(null, tv)), Math.ceil(Math.max.apply(null, tv)), 5);
+      tlo = tt[0]; thi = tt[tt.length - 1]; tstep = tt;
+    }
+    var YI = function (v) { return T + (PB - T) * (ihi - v) / ihi; }, YT = function (v) { return T + (PB - T) * (thi - v) / (thi - tlo); };
+    var fi = rows.findIndex(function (w) { return w.ifc; });
+    if (fi >= 0) {
+      U.add(svg, "rect", { x: X(fi - 0.5), y: T, width: W - R - X(fi - 0.5), height: S1 - T, fill: "var(--accent-soft)", opacity: 0.5 });
+      U.add(svg, "text", { x: X(fi - 0.5) + 6, y: T + 12, style: "fill:var(--accent);font-weight:600" }, "예측 " + S.H + "주");
+    }
+    U.add(svg, "text", { x: L - 6, y: T - 10, "text-anchor": "end", style: "fill:var(--accent);font-weight:600" }, "지수");
+    if (hasT) U.add(svg, "text", { x: W - R + 6, y: T - 10, style: "fill:var(--warn);font-weight:600" }, "기온");
+    it.forEach(function (t, k) {
+      U.add(svg, "line", { x1: L, x2: W - R, y1: YI(t), y2: YI(t), class: "axis", "stroke-width": k === 0 ? 1 : 0.6 });
+      U.add(svg, "text", { x: L - 6, y: YI(t) + 4, "text-anchor": "end", style: "fill:var(--accent)" }, U.won(t));
+    });
+    if (hasT) tstep.forEach(function (t) { U.add(svg, "text", { x: W - R + 6, y: YT(t) + 4, style: "fill:var(--warn)" }, t + "°"); });
+    if (hasT && 10 > tlo && 10 < thi) {
+      U.add(svg, "line", { x1: L, x2: W - R, y1: YT(10), y2: YT(10), stroke: "var(--warn)", "stroke-dasharray": "1 4", "stroke-width": 1.2, opacity: 0.8 });
+      U.add(svg, "text", { x: W - R - 4, y: YT(10) - 4, "text-anchor": "end", style: "fill:var(--warn)" }, "10°C");
+    }
+    rows.forEach(function (w, i) {
+      var d = new Date(w.t + 6 * DAY);
+      if (i === 0 || new Date(rows[i - 1].t + 6 * DAY).getUTCMonth() !== d.getUTCMonth()) {
+        U.add(svg, "line", { x1: X(i), x2: X(i), y1: T, y2: S1, stroke: "var(--line)", "stroke-width": 0.8 });
+        U.add(svg, "text", { x: X(i) + 3, y: Ht - 12 }, (d.getUTCMonth() + 1) + "월");
+      }
+    });
+    var mid = (S0 + S1) / 2;
+    if (hasT) {
+      U.add(svg, "line", { x1: L, x2: W - R, y1: mid, y2: mid, class: "axis", "stroke-width": 0.6 });
+      U.add(svg, "text", { x: L - 6, y: mid + 4, "text-anchor": "end", style: "font-size:10px" }, "±°C");
+      rows.forEach(function (w, i) {
+        if (w.cur == null || w.ly == null) return;
+        var d = w.cur - w.ly, h = Math.min(1, Math.abs(d) / 4) * (S1 - S0) / 2;
+        U.add(svg, "rect", { x: X(i) - step * 0.36, width: step * 0.72, y: d > 0 ? mid - h : mid, height: Math.max(1, h), fill: d > 0 ? "var(--warm)" : "var(--cold)", opacity: 0.75, rx: 1 });
+      });
+    }
+    var path = function (key, Y, from, to) { var p = ""; for (var i = from; i <= to; i++) { var v = rows[i][key]; if (v == null) continue; p += (p ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); } return p; };
+    var last = fi >= 0 ? fi - 1 : n - 1;
+    if (hasT) {
+      U.add(svg, "path", { d: path("ly", YT, 0, n - 1), fill: "none", stroke: "var(--warn)", "stroke-width": 1.4, "stroke-dasharray": "2 3", opacity: 0.6 });
+      U.add(svg, "path", { d: path("cur", YT, 0, last), fill: "none", stroke: "var(--warn)", "stroke-width": 2.2 });
+      if (fi >= 0) U.add(svg, "path", { d: path("cur", YT, Math.max(0, fi - 1), n - 1), fill: "none", stroke: "var(--warn)", "stroke-width": 2.2, "stroke-dasharray": "6 4" });
+    }
+    U.add(svg, "path", { d: path("ily", YI, 0, n - 1), fill: "none", stroke: "var(--accent)", "stroke-width": 1.4, "stroke-dasharray": "2 3", opacity: 0.55 });
+    U.add(svg, "path", { d: path("icur", YI, 0, last), fill: "none", stroke: "var(--accent)", "stroke-width": 2.4 });
+    if (fi >= 0) U.add(svg, "path", { d: path("icur", YI, Math.max(0, fi - 1), n - 1), fill: "none", stroke: "var(--accent)", "stroke-width": 2.4, "stroke-dasharray": "6 4" });
     var g = U.add(svg, "g", { visibility: "hidden", style: "pointer-events:none" });
-    var vl = U.add(g, "line", { y1: T, y2: Ht - B, stroke: "var(--muted)", "stroke-width": 1 });
-    var dot = U.add(g, "circle", { r: 4, fill: "var(--accent)", stroke: "var(--surface)", "stroke-width": 2 });
-    var box = U.add(g, "rect", { rx: 5, fill: "var(--surface)", stroke: "var(--line)", width: 170 });
+    var vl = U.add(g, "line", { y1: T, y2: S1, stroke: "var(--muted)", "stroke-width": 1 });
+    var box = U.add(g, "rect", { rx: 5, fill: "var(--surface)", stroke: "var(--line)", width: 178 });
     var tx = U.add(g, "text", { style: "fill:var(--ink);font-size:11.5px" });
-    var ov = U.add(svg, "rect", { x: L, y: T, width: W - L - R, height: Ht - T - B, fill: "transparent" });
+    var ov = U.add(svg, "rect", { x: L, y: T, width: W - L - R, height: S1 - T, fill: "transparent" });
     ov.addEventListener("pointermove", function (e) {
       var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
       var p = pt.matrixTransform(svg.getScreenCTM().inverse());
-      var k = Math.max(i0, Math.min(n + H - 1, Math.round((p.x - L) / step) + i0));
-      var lines = [fmtFull(wk(k)) + " 주", (k < n ? "실적 " : "예측 ") + val(k).toFixed(1)];
-      if (ly(k) != null) lines.push("1년 전 같은 주 " + ly(k).toFixed(1));
-      if (sv(k) != null) lines.push((k < n ? "판매 " : "예측 판매 ") + U.won(sv(k)) + "장");
+      var i = Math.max(0, Math.min(n - 1, Math.round((p.x - L) / step))), w = rows[i];
+      var lines = [fmtFull(w.t) + " 주" + (w.ifc ? " (예측)" : ""), "지수 " + (w.icur != null ? w.icur.toFixed(1) : "—") + " / 전년 " + (w.ily != null ? w.ily.toFixed(1) : "—")];
+      if (w.icur != null && w.ily > 0) lines.push("지수 전년 대비 " + sp(w.icur / w.ily - 1));
+      if (hasT) { lines.push("기온 " + deg(w.cur) + (w.fc ? "(예보)" : "") + " / 전년 " + deg(w.ly)); if (w.cur != null && w.ly != null) lines.push("기온 차이 " + sdeg(w.cur - w.ly)); }
       g.setAttribute("visibility", "visible");
-      vl.setAttribute("x1", X(k)); vl.setAttribute("x2", X(k));
-      dot.setAttribute("cx", X(k)); dot.setAttribute("cy", Y(val(k)));
-      var bx = X(k) + 12 + 170 > W - R ? X(k) - 182 : X(k) + 12;
+      vl.setAttribute("x1", X(i)); vl.setAttribute("x2", X(i));
+      var bx = X(i) + 190 > W - R ? X(i) - 190 : X(i) + 12;
       box.setAttribute("x", bx); box.setAttribute("y", T + 4); box.setAttribute("height", lines.length * 16 + 10);
       tx.textContent = "";
       lines.forEach(function (ln, j) { U.add(tx, "tspan", { x: bx + 9, y: T + 21 + j * 16, style: j === 0 ? "font-weight:600" : "" }, ln); });
@@ -980,85 +1031,117 @@ details.card li { margin-bottom: 6px }
     ov.addEventListener("pointerleave", function () { g.setAttribute("visibility", "hidden"); });
     return svg;
   }
-  function chartMini(r) {
-    var n = r.s.length, H = r.f.length, win = Math.min(n, 52), i0 = n - win, W = 240, Ht = 72, P = 4;
-    var svg = U.svgEl(W, Ht, r.name + " 최근 1년과 예측");
-    var val = function (i) { return i < n ? r.s[i] : r.f[i - n]; }, top = 1, i;
-    for (i = i0; i < n + H; i++) top = Math.max(top, val(i));
-    var X = function (k) { return P + (k - i0) * (W - 2 * P) / (win + H - 1); }, Y = function (v) { return P + (Ht - 2 * P) * (1 - v / top); };
-    U.add(svg, "rect", { x: X(n - 0.5), y: 0, width: W - X(n - 0.5), height: Ht, fill: "var(--accent-soft)", opacity: 0.6 });
-    var pa = "", pb = "";
-    for (i = i0; i < n; i++) pa += (pa ? "L" : "M") + X(i).toFixed(1) + " " + Y(val(i)).toFixed(1);
-    for (i = n - 1; i < n + H; i++) pb += (pb ? "L" : "M") + X(i).toFixed(1) + " " + Y(val(i)).toFixed(1);
-    U.add(svg, "path", { d: pa, fill: "none", stroke: "var(--accent)", "stroke-width": 1.6 });
-    U.add(svg, "path", { d: pb, fill: "none", stroke: "var(--accent)", "stroke-width": 1.8, "stroke-dasharray": "4 3" });
-    return svg;
-  }
   function trendPill(r) {
     if (!isFinite(r.chg)) return '<span class="pill info">—</span>';
     return r.chg > 0.1 ? '<span class="pill good">▲ 상승</span>' : (r.chg < -0.1 ? '<span class="pill bad">▼ 하락</span>' : '<span class="pill info">― 유지</span>');
   }
+  function relPill(r) { return '<span class="pill ' + (r.rel === "높음" ? "good" : (r.rel === "보통" ? "info" : "warn")) + '">' + r.rel + "</span>"; }
 
   // ---------- 화면
-  function selRow() { return S.rows.filter(function (r) { return r.name === S.sel; })[0]; }
-  function render() {
-    if (!S.idx) return;
-    var H = S.H, idx = S.idx, n = idx.weeks.length;
-    $("t-h-out").textContent = H + "주";
-    $("t-h-th").innerHTML = "향후 " + H + "주<br>평균 지수";
-    S.rows = compute();
-    if (!selRow()) S.sel = (S.rows.filter(function (r) { return nk(r.name) === nk("후드집업"); })[0] || S.rows[0]).name;
-    var linked = S.rows.filter(function (r) { return r.link; }).length;
+  function buildCtx() {
+    var ctx = { by: {} };
+    S.rows.forEach(function (r) {
+      var rows = chartRows(r), done = rows.filter(function (w) { return w.done; });
+      ctx.by[r.name] = { rows: rows, dT4: tdiff(done.slice(-4)), dI4: yoyRows(done.slice(-4)), se: sensitivity(done.slice(-12)) };
+    });
+    var any = ctx.by[S.rows[0].name].rows, done = any.filter(function (w) { return w.done; });
+    var lastW = done[done.length - 1];
+    ctx.lastDiff = lastW && lastW.cur != null && lastW.ly != null ? lastW.cur - lastW.ly : NaN;
+    ctx.lastTemp = lastW ? lastW.cur : null;
+    ctx.next = tdiff(any.filter(function (w) { return !w.done && w.cur != null; }));
+    var bc = firstBelow(any, "cur", 10), bl = firstBelow(any, "ly", 10);
+    ctx.gap = bc >= 0 && bl >= 0 ? bc - bl : null; ctx.bc = bc >= 0 ? any[bc] : null; ctx.bl = bl >= 0 ? any[bl] : null;
+    ctx.hasT = !!WX.src && any.some(function (w) { return w.cur != null; });
+    return ctx;
+  }
+  function chipBtn(r, label) { return '<button type="button" class="chip" data-n="' + esc(r.name) + '">' + esc(r.name) + " " + label + " →</button>"; }
+  function renderWeek(ctx) {
+    var n = S.idx.weeks.length, lw = S.idx.weeks[n - 1], H = S.H, items = [];
+    $("wk-date").textContent = fmtD(lw) + "~" + fmtD(lw + 6 * DAY) + " 주 기준";
     $("t-pill").className = "pill " + (S.demo ? "warn" : "good");
-    $("t-pill").textContent = S.demo ? "가상 데이터 · 시연용" : "올린 데이터";
-    $("t-src").textContent = S.demo ? "가상 지수로 화면을 보여주는 중입니다. 실제 분석은 데이터를 올려주세요." : S.src;
-    $("t-meta").textContent = fmtFull(idx.weeks[0]) + " ~ " + fmtFull(idx.weeks[n - 1] + 6 * DAY) + " · " + n + "주 · 복종 " + idx.names.length + "개" +
-      (S.sales ? " · 판매수량 연결 " + linked + "개" + (S.salesSrc ? " (" + S.salesSrc + ")" : "") : "") + (n < 60 ? " · 1년 이상(60주+)이어야 계절 패턴 예측이 됩니다" : "");
-    var up = S.rows.filter(function (r) { return r.chg > 0.1; }), dn = S.rows.filter(function (r) { return r.chg < -0.1; });
-    var top = S.rows[0], bot = S.rows[S.rows.length - 1];
-    $("t-kpis").innerHTML = [
-      ["상승 복종", up.length + "개"], ["유지 복종", (S.rows.length - up.length - dn.length) + "개"], ["하락 복종", dn.length + "개"],
-      ["가장 크게 오르는 복종", U.esc(top.name) + " " + sp(top.chg)], ["가장 크게 내리는 복종", U.esc(bot.name) + " " + sp(bot.chg)],
-      ["마지막 실적 주", fmtD(idx.weeks[n - 1]) + "~" + fmtD(idx.weeks[n - 1] + 6 * DAY)]
-    ].map(function (k) { return '<div class="kpi"><b>' + k[1] + "</b><span>" + k[0] + "</span></div>"; }).join("");
-
+    $("t-pill").textContent = S.demo ? "지수: 가상 데이터" : "지수: 올린 데이터";
+    if (ctx.hasT) {
+      items.push("<b>날씨</b> 지난주 " + esc(WX.city) + " 주평균 " + deg(ctx.lastTemp) + "로 전년 같은 주보다 " +
+        (Math.abs(ctx.lastDiff) < 0.5 ? "비슷했습니다" : Math.abs(ctx.lastDiff).toFixed(1) + "°C " + (ctx.lastDiff > 0 ? "따뜻했습니다" : "추웠습니다")) + "." +
+        (isFinite(ctx.next) ? " 다음 2주 예보는 전년보다 " + (Math.abs(ctx.next) < 0.5 ? "비슷합니다." : Math.abs(ctx.next).toFixed(1) + "°C " + (ctx.next > 0 ? "따뜻합니다." : "춥습니다.")) : "") +
+        (ctx.gap == null ? "" : " 주평균이 처음 10°C 아래로 내려간 시점은 " + (ctx.gap === 0 ? "전년과 같습니다." : "전년보다 " + Math.abs(ctx.gap) + "주 " + (ctx.gap > 0 ? "늦습니다." : "빠릅니다."))));
+    }
+    var up = S.rows.filter(function (r) { return r.chg > 0.1; }).slice(0, 3), dn = S.rows.filter(function (r) { return r.chg < -0.1; }).slice(-3).reverse();
+    var list = function (a, f) { return a.map(function (r) { return "<b>" + esc(r.name) + "</b> " + f(r); }).join(", "); };
+    items.push("<b>수요 흐름</b> 향후 " + H + "주 " + (up.length ? "오를 복종: " + list(up, function (r) { return sp(r.chg); }) : "크게 오를 복종 없음") +
+      " · " + (dn.length ? "내릴 복종: " + list(dn, function (r) { return sp(r.chg); }) : "크게 내릴 복종 없음") + ".");
+    var y4 = S.rows.map(function (r) { return { r: r, v: ctx.by[r.name].dI4 }; }).filter(function (o) { return isFinite(o.v); }).sort(function (a, b) { return b.v - a.v; });
+    var more = y4.filter(function (o) { return o.v > 0.05; }).slice(0, 3), less = y4.filter(function (o) { return o.v < -0.05; }).slice(-3).reverse();
+    var l2 = function (a) { return a.map(function (o) { return "<b>" + esc(o.r.name) + "</b> " + sp(o.v); }).join(", "); };
+    items.push("<b>전년 대비</b> 최근 4주 " + (more.length ? "전년보다 많이 찾는 복종: " + l2(more) : "전년보다 크게 늘어난 복종 없음") + " · " + (less.length ? "덜 찾는 복종: " + l2(less) : "크게 줄어든 복종 없음") + ".");
+    if (ctx.hasT) {
+      var cold = S.rows.filter(function (r) { var se = ctx.by[r.name].se; return se && se.kind === "cold"; });
+      var names = cold.map(function (r) { return "<b>" + esc(r.name) + "</b>"; }).join("·");
+      var t;
+      if (!cold.length) t = "최근 12주 기준으로 기온에 뚜렷하게 반응하는 복종은 없습니다. 수요 변화는 상품·행사·트렌드 쪽을 먼저 보세요.";
+      else if (ctx.next >= 1) t = "추워야 팔리는 " + names + "은(는) 다음 2주가 전년보다 따뜻해 수요가 늦게 올 수 있습니다. 매장 투입·리오더 입고 시점을 1~2주 늦추는 것을 검토하세요.";
+      else if (ctx.next <= -1) t = "추워야 팔리는 " + names + "은(는) 다음 2주가 전년보다 추워 수요가 빨리 올 수 있습니다. 매장 재고와 리오더를 앞당겨 점검하세요.";
+      else t = "추워야 팔리는 복종은 " + names + "입니다. 다음 2주 기온은 전년과 비슷해 기온 변수는 크지 않습니다.";
+      items.push("<b>기온 영향</b> " + t);
+    }
+    $("wk-list").innerHTML = items.map(function (h) { return "<li>" + h + "</li>"; }).join("");
+    var reo = S.rows.filter(function (r) { return r.chg > 0.1 && r.rel !== "낮음"; }).slice(0, 3);
+    var md = S.rows.filter(function (r) { return r.chg < -0.2; }).slice(-3).reverse();
+    $("wk-act").innerHTML = (reo.length ? '<span class="lbl">리오더 검토</span>' + reo.map(function (r) { return chipBtn(r, "향후 " + sp(r.chg)); }).join("") : "") +
+      (md.length ? '<span class="lbl" style="margin-left:8px">가격인하·물량 조정 검토</span>' + md.map(function (r) { return chipBtn(r, "향후 " + sp(r.chg)); }).join("") : "") +
+      (reo.length || md.length ? '<span class="note" style="margin:0">누르면 그 복종의 주평균 변화율로 ② 리오더·가격인하 판단을 엽니다.</span>' : "");
+  }
+  function renderTable(ctx) {
+    $("t-h-th").innerHTML = "향후 " + S.H + "주<br>변화";
     $("t-table").querySelector("tbody").innerHTML = S.rows.map(function (r) {
-      return '<tr data-n="' + U.esc(r.name) + '" class="' + (r.name === S.sel ? "sel" : "") + '" tabindex="0"><td class="t"><b>' + U.esc(r.name) + '</b></td><td class="t">' + trendPill(r) +
-        "</td><td>" + r.recent4.toFixed(1) + '</td><td class="' + cls(r.yoy) + '">' + sp(r.yoy) + "</td><td>" + r.fMean.toFixed(1) +
-        '</td><td class="' + cls(r.chg) + '">' + sp(r.chg) + '</td><td class="' + cls(r.weekly) + '"><b>' + sp(r.weekly, 1) + "</b></td><td>" + fmtD(r.peak) + " 주</td>" +
-        '<td class="' + (r.wape > r.naive ? "neg" : "") + '">' + U.pct(r.wape, 0) + "</td><td>" + U.pct(r.naive, 0) + "</td><td>" + (r.link ? r.link.r2.toFixed(2) : "—") +
-        "</td><td>" + (r.salesF ? U.won(sum(r.salesF, 0, r.salesF.length)) : "—") + "</td></tr>";
+      var c = ctx.by[r.name];
+      return '<tr data-n="' + esc(r.name) + '" class="' + (r.name === S.sel ? "sel" : "") + '" tabindex="0"><td class="t"><b>' + esc(r.name) + '</b></td><td class="t">' + trendPill(r) +
+        '</td><td class="' + cls(c.dI4) + '">' + sp(c.dI4) + '</td><td class="' + cls(r.chg) + '">' + sp(r.chg) + '</td><td class="' + cls(r.weekly) + '"><b>' + sp(r.weekly, 1) + "</b></td><td>" + fmtD(r.peak) + " 주</td>" +
+        '<td class="t">' + (ctx.hasT ? sensPill(c.se) : "—") + "</td><td>" + (ctx.hasT && c.se ? sp(c.se.slope, 1) : "—") + '</td><td class="t">' + relPill(r) + "</td></tr>";
     }).join("");
-
-    var r = selRow();
-    $("t-d-title").textContent = r.name + " — 최근 2년 지수와 향후 " + H + "주 예측";
-    var dir = !isFinite(r.chg) ? "계산할 수 없습니다" : (Math.abs(r.chg) <= 0.1 ? "비슷할 것으로 예상됩니다(" + sp(r.chg) + ")" :
-      Math.abs(r.chg * 100).toFixed(0) + "% " + (r.chg > 0 ? "높을" : "낮을") + " 것으로 예상됩니다");
-    $("t-d-desc").textContent = (S.demo ? "[가상 데이터] " : "") + "향후 " + H + "주 평균 지수가 최근 4주보다 " + dir + " (주평균 " + sp(r.weekly, 1) + "). " +
-      (r.wape <= r.naive ? "검증오차가 단순예측보다 작아 계절 패턴을 믿을 만합니다." : "검증오차가 단순예측보다 커서 이 복종은 예측을 참고만 하세요.") +
-      "";
+  }
+  function renderDetail(ctx) {
+    var r = selRow(), c = ctx.by[r.name], rows = c.rows, H = S.H;
+    $("t-d-title").textContent = r.name + " — 지수 × 기온 (최근 26주 + 예측 " + H + "주)";
+    var done = rows.filter(function (w) { return w.done; });
+    var months = {};
+    done.forEach(function (w) { var m = new Date(w.t + 3 * DAY).getUTCMonth() + 1; (months[m] = months[m] || { m: m, t: w.t, rows: [] }).rows.push(w); });
+    var mlist = Object.keys(months).map(function (k) { return months[k]; }).sort(function (a, b) { return a.t - b.t; }).slice(-3);
+    var lastM = mlist[mlist.length - 1], dir = !isFinite(r.chg) ? "" : (Math.abs(r.chg) <= 0.1 ? "비슷할" : Math.abs(r.chg * 100).toFixed(0) + "% " + (r.chg > 0 ? "높을" : "낮을"));
+    var txt = (S.demo ? "[지수는 가상 데이터] " : "") + "향후 " + H + "주 평균 지수가 최근 4주보다 " + dir + " 것으로 예상됩니다(주평균 " + sp(r.weekly, 1) + ", 예측 신뢰도 " + r.rel + "). ";
+    if (ctx.hasT && lastM) {
+      var dTm = tdiff(lastM.rows), dIm = yoyRows(lastM.rows);
+      txt += lastM.m + "월 " + WX.city + "은 전년보다 " + (Math.abs(dTm) < 0.3 ? "기온이 비슷했고" : Math.abs(dTm).toFixed(1) + "°C " + (dTm > 0 ? "따뜻했고" : "추웠고")) + " 지수는 전년 대비 " + sp(dIm) + "입니다. " + readMonth(dTm, dIm, r.name) + ".";
+    }
+    $("t-d-desc").textContent = txt;
     $("t-apply").disabled = !isFinite(r.weekly);
     $("t-apply").textContent = "주평균 " + sp(r.weekly, 1) + "로 리오더 판단하기 →";
     $("t-facts").innerHTML = [
-      ["최근 4주 지수", r.recent4.toFixed(1), "전년 동기 대비 " + sp(r.yoy)],
-      ["향후 " + H + "주 평균 지수", r.fMean.toFixed(1), "최근 대비 " + sp(r.chg)],
-      ["주평균 변화율", sp(r.weekly, 1), "② 리오더 탭 '주간 판매 변화율'에 들어갈 값"],
-      ["예측 피크", fmtD(r.peak) + " 주", "향후 " + H + "주 중 가장 높은 주"],
-      ["검증오차 / 단순예측", U.pct(r.wape, 0) + " / " + U.pct(r.naive, 0), "마지막 " + Math.min(H, 8) + "주를 가리고 맞춰본 오차"],
-      r.link ? ["판매 연계", "R² " + r.link.r2.toFixed(2), "향후 " + H + "주 예측 판매 " + U.won(sum(r.salesF, 0, r.salesF.length)) + "장" + (r.link.lag ? " (지수 1주 선행)" : "")] : ["판매 연계", "—", "판매수량을 올리면 계산"]
+      ["최근 4주 전년 대비", sp(c.dI4), "같은 주 지수 합계 기준"],
+      ["향후 " + H + "주 변화", sp(r.chg), "피크 " + fmtD(r.peak) + " 주"],
+      ["주평균 변화율", sp(r.weekly, 1), "② 리오더 '주간 판매 변화율'에 들어갈 값"],
+      ["1°C 따뜻할 때 지수", ctx.hasT && c.se ? sp(c.se.slope, 1) : "—", ctx.hasT ? (c.se ? (c.se.kind === "cold" ? "추워야 팔리는 복종" : (c.se.kind === "warm" ? "따뜻해야 팔리는 복종" : "기온 영향 작음")) + " · 최근 " + c.se.n + "주" : "자료 부족") : "기온 자료 없음"],
+      ["최근 4주 기온 차이", ctx.hasT ? sdeg(c.dT4) : "—", "전년 같은 주 대비"]
     ].map(function (f) { return '<div class="fact"><b>' + f[1] + "</b><span>" + f[0] + "<br>" + f[2] + "</span></div>"; }).join("");
-    var c = $("t-chart"); c.innerHTML = ""; c.appendChild(chartDetail(r));
-    $("t-legend").innerHTML = '<span><i style="background:var(--accent)"></i>지수 실적</span><span><i style="background:transparent;border:2px dashed var(--accent);box-sizing:border-box"></i>지수 예측</span>' +
-      '<span><i style="background:var(--muted);opacity:.6"></i>1년 전 같은 주</span>' + (r.hist ? '<span><i style="background:var(--bar)"></i>판매수량 (오른쪽 축, 연한 막대 = 예측)</span>' : "");
-
-    var m = $("t-minis"); m.innerHTML = "";
-    S.rows.forEach(function (r2) {
-      var b = document.createElement("button");
-      b.type = "button"; b.className = "mini"; b.setAttribute("aria-pressed", r2.name === S.sel ? "true" : "false"); b.dataset.n = r2.name;
-      b.innerHTML = '<span class="mt"><span>' + U.esc(r2.name) + "</span>" + trendPill(r2) + "</span>";
-      b.appendChild(chartMini(r2));
-      m.appendChild(b);
-    });
+    var el = $("t-chart"); el.innerHTML = ""; el.appendChild(chartCombo(rows, r.name));
+    $("w-month").querySelector("tbody").innerHTML = mlist.map(function (o) {
+      var dT = tdiff(o.rows), dI = yoyRows(o.rows);
+      return '<tr style="cursor:default"><td>' + o.m + "월" + (o.rows.length < 4 ? " <span style='color:var(--muted)'>(" + o.rows.length + "주)</span>" : "") + "</td><td>" + deg(mean(o.rows.map(function (w) { return w.cur; }))) + "</td><td>" + deg(mean(o.rows.map(function (w) { return w.ly; }))) +
+        '</td><td class="' + (dT >= 0.5 ? "neg" : (dT <= -0.5 ? "pos" : "")) + '">' + sdeg(dT) + '</td><td class="' + cls(dI) + '">' + sp(dI) + '</td><td class="t" style="white-space:normal;min-width:220px;text-align:left">' + esc(ctx.hasT ? readMonth(dT, dI, r.name) : "기온 자료 없음") + "</td></tr>";
+    }).join("") || '<tr><td colspan="6" class="t">자료가 부족합니다.</td></tr>';
+    var src = WX.src;
+    $("w-src").textContent = (!src ? "기온 자료를 불러오지 못했습니다. " : (src.live ? "기온: Open-Meteo 기상 재분석·예보(실시간). " : "실시간 조회가 안 돼 " + fmtFull(src.now) + " 기준 저장 기온을 표시합니다. ")) +
+      "전년 같은 주 = 52주(364일) 전. 1°C 민감도 = 최근 12주 주별 기온 차이와 지수 전년비의 기울기로, 참고용입니다.";
+  }
+  function render() {
+    if (!S.idx) return;
+    $("t-h-out").textContent = S.H + "주";
+    S.rows = compute();
+    if (!selRow()) S.sel = (S.rows.filter(function (r) { return nk(r.name) === nk("후드집업"); })[0] || S.rows[0]).name;
+    var n = S.idx.weeks.length, ctx = buildCtx();
+    $("t-src").textContent = S.demo ? "가상 지수로 보여주는 중입니다. 실제 분석은 네이버 데이터랩 지수를 올려주세요." : S.src;
+    $("t-meta").textContent = fmtFull(S.idx.weeks[0]) + " ~ " + fmtFull(S.idx.weeks[n - 1] + 6 * DAY) + " · " + n + "주 · 복종 " + S.idx.names.length + "개" + (n < 60 ? " · 1년 이상(60주+)이어야 계절 패턴 예측이 됩니다" : "");
+    renderWeek(ctx); renderTable(ctx); renderDetail(ctx);
   }
   function select(name) { S.sel = name; render(); }
 
@@ -1067,169 +1150,23 @@ details.card li { margin-bottom: 6px }
   function onIndex(name, buf) {
     toSheets(name, buf, function (sheets, err) {
       if (!sheets) return msg(err, true);
-      var got = loadIndex(name, sheets);
+      var got = loadIndex(sheets);
       if (!got) return msg("'" + name + "'에서 날짜 열과 지수 열을 찾지 못했습니다. 첫 열이 주차(날짜), 다음 열부터 복종별 지수인지 확인하세요.", true);
-      S.idx = got.idx; S.demo = false; S.src = name + (sheets.length > 1 ? " · '" + got.sheet + "' 시트" : "");
-      if (S.salesSrc === "") S.sales = null;
-      S.sel = null;
+      S.idx = got.idx; S.demo = false; S.src = name + (sheets.length > 1 ? " · '" + got.sheet + "' 시트" : ""); S.sel = null;
       msg("지수 " + got.idx.names.length + "개 복종, " + got.idx.weeks.length + "주를 읽었습니다: " + got.idx.names.join(", "));
-      render();
+      loadWeather(WX.city);
     });
   }
-  function onSales(name, buf) {
-    toSheets(name, buf, function (sheets, err) {
-      if (!sheets) return msg(err, true);
-      var p = loadSales(sheets);
-      if (!p) return msg("'" + name + "'에서 주차·복종·판매수량을 찾지 못했습니다.", true);
-      S.sales = p; S.salesSrc = name;
-      var hit = p.names.filter(function (nm) { return S.idx.names.some(function (x) { return nk(x) === nk(nm); }); });
-      msg("판매수량 " + p.names.length + "개 복종을 읽었고, 지수와 이름이 맞는 " + hit.length + "개를 연결했습니다" + (hit.length < p.names.length ? " (안 맞는 이름: " + p.names.filter(function (x) { return hit.indexOf(x) < 0; }).join(", ") + ")" : "") + ".", !hit.length);
-      render();
-    });
-  }
-  function readInput(input, fn) {
+  function readInput(input) {
     var f = input.files && input.files[0];
     if (!f) return;
     var fr = new FileReader();
-    fr.onload = function () { fn(f.name, fr.result); };
+    fr.onload = function () { onIndex(f.name, fr.result); };
     fr.onerror = function () { msg("파일을 읽지 못했습니다.", true); };
     fr.readAsArrayBuffer(f);
     input.value = "";
   }
-  function useDemo() { var d = demo(); S.idx = d.idx; S.sales = d.sales; S.demo = true; S.src = ""; S.salesSrc = ""; S.sel = null; msg(""); render(); }
-
-  // ---------- 날씨: 주평균 기온 금년 vs 전년 (Open-Meteo 재분석·예보, 실패 시 저장본)
-  var CITIES = { "서울": [37.5665, 126.978], "대전": [36.3504, 127.3845], "대구": [35.8714, 128.6014], "광주": [35.1595, 126.8526], "부산": [35.1796, 129.0756] };
-  var WSNAP = /*__WEATHER__*/{"asof":"2026-11-11","start":"2025-05-19","cities":{"서울":[15.1,20.5,23.5,21.9,19.6,15.2,16.0,18.6,19.9,19.4,20.6,22.6,22.1,22.6,20.8,20.7,20.3,21.3,23.5,22.9,24.6,23.4,21.2,22.0,25.1,23.9,25.1,25.4,22.7,23.6,24.6,26.9,23.0,21.2,21.4,23.5,24.0,20.9,21.8,23.1,24.8,25.8,26.3,26.3,26.1,26.5,26.0,26.8,27.2,27.9,30.0,30.8,30.7,29.4,30.3,27.3,23.7,22.2,22.4,23.4,24.0,23.8,26.5,26.9,26.9,27.3,27.9,29.8,32.1,32.8,31.9,32.5,32.2,31.7,31.3,31.2,30.0,26.9,27.0,25.8,26.3,25.6,24.3,25.6,25.4,26.6,24.7,24.9,26.4,26.9,26.6,27.2,27.4,27.4,28.2,28.1,29.0,30.0,28.5,25.9,25.8,26.5,27.1,26.8,26.4,24.8,24.2,25.7,24.7,26.2,25.7,24.1,23.1,23.1,23.3,23.9,22.5,22.6,23.3,24.0,23.3,22.1,21.2,18.8,19.1,20.1,19.6,20.6,20.8,21.5,20.4,21.4,20.1,19.2,18.7,18.8,20.4,20.4,21.0,20.6,18.0,18.3,20.4,19.1,17.0,20.0,18.3,15.8,16.5,18.8,19.4,18.5,15.6,14.0,9.3,8.5,11.4,13.9,14.4,13.2,12.1,6.6,6.4,9.2,10.6,12.8,11.7,7.5,5.0,7.8,9.5,10.6,11.7,12.2,11.7,7.4,7.4,8.6,9.4,7.3,7.4,9.4,3.2,0.6,1.4,5.7,5.7,7.6,9.0,10.9,6.6,4.7,4.5,1.2,3.8,10.1,4.7,-1.0,-6.8,-5.3,-5.4,0.3,4.3,1.1,0.3,2.5,2.5,-0.1,0.9,-1.0,-0.6,1.0,1.5,-0.2,1.2,5.3,-2.4,-2.6,0.2,0.5,-4.5,-9.3,-4.2,0.6,3.1,-1.9,-6.1,-8.2,-9.2,-5.8,-1.4,-2.9,-3.0,-1.3,-5.7,-1.9,0.7,-7.3,-5.6,-4.1,-5.3,2.1,0.9,-1.7,-1.0,-4.7,-10.4,-11.0,-10.6,-8.0,-7.3,-8.2,-7.2,-5.7,-6.8,-6.6,-7.8,-6.4,-3.8,-3.5,-3.2,0.8,1.7,-6.7,-8.7,-9.1,-5.2,-0.5,1.1,0.6,3.1,4.3,4.5,0.3,-0.7,1.1,-0.4,3.1,7.5,6.9,0.4,0.4,4.3,4.8,7.1,6.2,6.6,3.7,4.5,4.5,3.8,1.0,-0.6,-0.2,2.7,1.5,2.5,4.8,5.3,5.6,5.2,5.0,5.3,5.1,4.1,5.2,5.5,7.6,9.1,10.3,10.9,10.1,9.8,10.1,11.3,12.9,13.3,11.5,9.7,12.6,13.6,10.3,9.7,6.7,8.3,8.9,9.9,10.0,12.2,15.7,17.6,16.8,17.3,16.1,17.5,20.3,12.4,11.0,13.3,16.0,16.6,17.2,16.4,14.8,12.6,13.3,15.8,17.0,16.2,12.7,13.0,13.2,15.4,14.8,14.8,15.6,16.9,16.0,18.4,17.9,23.0,24.6,23.9,22.9,23.4,22.3,17.6,17.2,19.3,17.7,20.4,22.9,23.3,21.0,20.2,20.2,20.6,22.8,22.9,25.5,25.8,22.9,20.2,21.9,22.2,21.5,22.1,20.6,20.8,22.2,24.3,24.1,25.5,27.7,27.2,26.9,26.9,21.6,22.6,23.2,23.9,22.6,21.3,22.6,26.1,26.2,26.2,26.9,26.3,23.8,25.0,26.2,25.4,24.9,25.8,25.4,23.9,24.4,27.8,29.5,29.2,28.0,24.9,25.6,26.5,24.8,25.2,24.3,25.0,25.3,25.3,27.5,27.3,26.5,26.1,27.5,27.6,27.3,28.1,29.0,29.6,30.9,32.0,31.9,33.3,33.5,29.4,27.4,28.5,27.9,26.0,27.0,28.0,25.0,24.7,24.7,26.6,26.7,26.4,24.4,24.0,26.7,27.5,26.8,27.1,26.8,25.8,26.2,24.8,23.6,23.1,24.3,25.2,23.7,22.8,22.9,23.3,24.1,21.4,18.8,20.0,20.6,21.3,22.1,20.7,21.7,22.6,23.5,24.0,23.6,24.2,24.1,23.9,22.7,20.2,21.1,21.4,20.3,20.5,21.4,17.7,16.1,16.9,19.1,16.4,15.8,16.9,17.4,18.4,19.2,21.5,22.7,18.2,14.2,15.7,17.6,18.4,18.0,13.8,15.5,12.5,8.8,12.5,14.7,16.6,15.6,11.2,6.9,7.4,11.3,10.9,7.9,9.7,9.6,10.9,12.2,6.9,3.8,4.1,7.2,5.4,8.7,10.7,11.7,10.1,9.9,10.1,9.3,7.2,1.2,4.3,6.3,8.3,1.2,4.1,6.0,6.9],"대전":[17.9,23.9,25.1,21.8,18.9,17.0,17.6,19.1,20.3,20.8,20.0,21.1,20.7,22.1,19.6,21.1,20.7,21.2,24.0,24.3,25.0,25.8,23.8,23.0,25.2,21.4,22.5,25.0,23.7,23.9,24.2,25.7,24.5,21.9,21.9,23.5,21.7,21.4,22.6,24.7,26.1,27.4,27.7,27.5,28.1,27.4,26.8,27.6,28.4,30.0,30.5,30.5,29.8,28.9,28.6,25.7,23.1,22.8,23.2,24.5,25.2,24.9,27.8,27.1,27.3,27.7,29.0,29.2,29.9,31.4,31.4,31.3,31.2,30.2,30.6,31.1,28.5,27.6,28.0,27.1,26.6,25.5,24.2,25.3,24.2,23.7,26.5,27.0,27.7,27.5,27.5,28.0,28.3,28.7,29.5,29.3,29.7,30.3,29.6,25.6,26.6,27.2,28.1,28.6,28.0,26.6,25.3,25.9,25.9,28.3,27.8,25.2,22.2,21.3,23.8,24.4,22.6,24.8,24.6,24.7,25.2,23.8,21.5,21.0,20.6,20.7,20.1,21.3,22.9,22.5,21.2,22.3,21.4,20.2,18.8,19.6,20.2,18.9,21.6,21.3,20.3,20.5,21.5,21.2,21.4,21.7,21.5,18.8,18.7,20.2,19.9,20.1,17.1,17.0,11.0,11.4,12.9,15.6,14.9,14.4,13.1,8.6,8.4,9.0,10.1,12.3,12.8,10.0,6.3,9.4,10.2,10.6,12.3,13.0,12.8,8.6,7.7,8.3,9.6,8.1,8.8,9.7,5.6,2.1,3.8,7.5,6.4,8.0,9.6,12.0,7.8,6.2,5.6,3.7,5.1,11.9,7.5,1.8,-3.4,-2.0,-2.0,2.9,8.6,4.3,1.9,3.9,6.1,1.9,2.9,1.1,1.8,5.9,5.2,1.9,4.2,8.2,-0.1,-0.7,1.2,2.8,-1.5,-6.5,-1.9,3.5,5.2,0.0,-3.3,-5.8,-6.0,-3.0,1.8,-0.4,-1.5,1.1,-4.0,0.4,2.7,-4.8,-1.4,-0.1,-0.8,6.7,2.6,1.5,1.4,-1.1,-6.4,-6.8,-7.2,-3.3,-3.1,-4.2,-3.7,-2.2,-4.1,-2.9,-4.7,-3.5,-1.1,-1.5,-1.7,1.8,4.1,-3.3,-6.0,-6.7,-2.2,0.6,2.2,1.7,3.9,5.4,5.2,1.4,1.0,1.9,0.9,4.4,9.2,9.0,2.6,0.6,4.0,7.0,7.5,6.5,8.1,5.2,6.8,5.4,6.4,2.5,0.9,1.5,2.3,2.9,3.9,5.0,5.4,6.1,6.3,6.5,8.0,6.3,5.3,6.0,7.1,9.0,10.6,11.4,12.5,12.3,12.3,12.2,13.5,13.4,13.7,12.4,10.5,14.0,12.5,10.6,11.0,7.3,8.3,10.7,11.7,12.6,14.5,17.1,16.5,17.3,17.8,14.3,17.0,19.5,13.8,11.3,13.1,15.1,15.7,16.6,17.0,16.8,14.4,14.1,16.0,15.9,17.1,13.7,13.5,13.9,16.6,16.7,15.3,15.6,16.9,18.4,17.1,19.1,21.5,21.6,21.9,22.4,22.7,22.3,16.6,17.7,19.6,18.6,20.5,23.1,23.6,22.2,21.6,20.6,21.5,23.9,24.0,23.6,25.1,23.7,21.4,22.5,23.6,21.6,22.4,21.6,21.0,22.2,23.9,23.8,24.4,25.8,24.9,25.3,24.9,22.6,23.1,22.0,21.6,21.4,22.5,23.4,25.7,26.1,26.4,26.4,22.7,24.4,25.0,26.2,24.7,25.7,27.1,25.3,24.4,26.6,28.6,29.4,29.4,28.9,26.5,25.7,26.4,26.2,26.6,26.3,27.1,26.8,27.3,28.1,28.3,28.3,28.3,28.4,28.7,27.9,28.5,30.1,30.8,31.9,31.5,31.5,32.3,32.6,28.7,28.5,28.9,26.9,25.8,26.5,26.8,25.2,23.7,25.0,27.2,26.3,26.2,24.7,25.8,28.0,28.6,27.5,28.6,27.3,25.9,25.6,24.7,24.2,25.9,24.5,25.3,24.3,23.3,23.1,22.9,23.2,22.1,19.8,20.6,21.8,22.2,21.2,20.9,21.9,22.1,23.7,23.3,23.0,22.8,23.9,22.9,22.5,20.0,20.5,21.5,20.9,21.0,21.5,18.2,16.4,16.6,19.9,17.4,15.9,16.9,16.8,17.8,19.2,21.1,22.4,18.9,14.2,14.8,16.4,18.5,19.9,16.6,15.8,13.8,10.2,14.0,15.1,16.7,17.7,13.2,7.9,9.0,13.3,13.1,8.4,10.2,9.9,10.4,11.1,8.8,5.1,5.9,7.0,6.4,8.0,9.2,11.2,11.8,13.2,11.0,11.4,8.7,3.3,5.9,7.8,10.9,3.0,5.0,6.8,7.7],"대구":[19.2,24.0,24.0,18.0,16.7,14.5,17.6,19.4,21.3,20.8,19.1,18.5,20.0,22.8,20.3,21.7,22.1,23.5,23.5,25.3,26.3,26.4,26.8,25.4,26.6,21.1,22.2,25.5,24.5,24.5,25.4,26.4,25.5,23.7,22.2,24.4,21.2,23.2,24.0,25.9,27.7,28.6,29.2,29.7,31.5,31.9,31.2,31.2,31.0,32.2,29.9,28.8,28.0,27.0,26.9,25.9,23.6,23.3,23.8,25.0,24.8,24.8,26.9,27.2,28.2,29.5,29.4,29.2,30.1,30.7,31.9,31.4,30.3,30.5,31.0,32.1,30.3,28.7,28.9,28.4,28.0,27.1,24.9,25.4,24.5,22.7,27.1,28.8,28.9,29.4,29.3,30.3,30.7,30.8,30.1,30.6,32.2,32.1,31.3,30.4,29.6,29.2,31.5,32.1,28.7,27.4,27.1,27.1,26.8,27.8,28.9,27.6,24.7,22.6,22.8,23.2,23.2,25.1,24.2,25.8,26.9,26.1,21.9,21.2,21.8,20.7,20.1,20.9,23.9,23.5,23.1,22.5,22.0,21.0,19.8,20.5,20.9,19.2,20.9,22.5,20.6,21.2,21.4,20.0,20.0,22.0,20.3,18.5,18.6,19.8,20.0,19.6,18.5,17.8,13.9,14.1,15.1,14.8,14.6,16.3,14.3,9.5,8.0,9.2,10.5,12.3,13.1,11.1,8.7,11.5,12.4,13.0,13.8,13.1,14.3,10.2,8.7,9.4,11.5,10.0,9.8,11.0,7.1,2.9,4.5,7.8,7.8,8.3,8.8,12.0,8.1,7.4,7.2,4.8,4.9,10.8,9.5,4.3,-1.9,-1.6,-0.4,1.4,7.5,6.8,2.7,3.9,7.1,3.1,3.1,1.7,2.0,3.4,6.1,3.3,5.5,9.0,1.6,0.5,3.1,5.5,-0.2,-5.8,-1.4,2.3,5.1,1.7,-2.2,-5.2,-5.6,-2.2,2.9,1.1,-0.0,1.9,-3.1,-0.3,3.7,-3.6,-2.9,1.4,-0.6,6.9,5.4,5.3,4.8,1.8,-3.5,-5.8,-6.6,-2.7,-2.0,-2.5,-2.2,-0.9,-2.7,-1.7,-3.7,-2.0,-0.7,-1.5,0.1,2.8,5.3,0.9,-3.8,-6.1,-1.1,0.8,3.4,3.6,5.1,7.4,8.3,4.3,4.0,4.0,3.4,6.4,9.1,12.3,4.7,2.3,5.3,8.1,7.7,6.4,8.0,6.4,6.9,5.9,7.8,5.3,2.2,3.1,3.6,4.3,6.1,6.1,5.3,6.3,7.8,8.9,10.9,8.7,8.3,9.0,10.9,12.0,12.1,12.4,12.9,15.3,16.5,15.1,15.0,14.4,13.1,12.6,13.0,14.5,14.2,12.9,12.7,8.8,10.2,11.9,15.5,14.5,16.0,17.0,14.3,16.8,14.8,13.2,19.5,20.6,18.5,15.2,15.2,15.6,15.0,18.3,20.2,21.0,18.2,15.6,16.3,15.9,20.3,15.0,14.8,16.2,18.4,20.6,17.3,18.2,20.1,20.3,18.9,21.1,20.4,22.0,24.7,26.2,26.5,24.9,16.4,18.3,18.3,17.4,20.1,22.5,23.9,20.4,22.7,22.6,24.5,27.0,26.0,21.7,24.5,25.0,23.9,23.5,21.6,22.0,23.1,24.0,23.8,24.7,26.5,26.2,25.6,25.7,25.6,27.4,26.2,25.4,24.2,20.6,19.9,20.5,21.9,23.1,23.3,25.1,25.8,26.7,21.9,23.7,24.5,25.4,25.6,26.5,27.7,27.4,27.1,29.1,31.3,31.3,31.2,30.4,30.6,29.2,27.9,27.6,26.1,27.8,29.4,29.6,29.7,30.9,31.1,30.9,31.7,31.1,31.6,31.1,32.0,33.3,33.9,33.6,31.2,31.3,30.7,31.6,27.9,27.7,27.2,25.9,26.3,28.0,29.8,28.4,23.8,25.1,27.1,26.3,26.7,25.5,26.6,28.8,29.8,29.8,30.4,26.8,25.6,26.3,25.7,26.9,27.0,26.3,24.9,24.0,23.3,23.8,23.5,22.8,21.5,20.5,23.0,23.4,24.3,24.4,23.4,22.8,22.7,22.8,22.9,22.6,22.3,22.3,23.4,24.2,21.6,19.8,21.2,22.6,21.2,22.0,19.5,17.2,17.8,19.5,19.0,17.1,18.1,18.9,19.3,21.8,21.4,21.9,19.9,15.3,15.5,18.0,18.7,20.4,19.7,15.9,15.6,10.9,13.9,15.9,17.6,17.3,14.2,9.0,9.3,13.8,13.5,9.6,11.2,10.8,10.8,11.9,10.0,6.0,7.2,8.2,8.5,10.2,11.3,12.2,11.4,13.4,11.3,11.6,10.3,3.4,6.9,7.9,11.2,3.9,4.9,6.9,9.1],"광주":[17.9,22.4,22.8,21.3,18.8,17.7,17.1,18.6,19.6,21.2,21.2,21.1,19.9,21.4,18.5,19.4,19.9,21.1,22.9,24.0,25.4,25.2,23.3,23.3,25.3,21.6,23.1,23.3,23.0,23.6,23.6,24.3,24.5,22.2,21.2,23.2,21.7,22.2,22.5,24.5,26.9,26.9,27.7,28.2,28.6,28.4,27.5,28.2,29.1,29.6,31.1,31.3,31.0,30.8,30.1,25.4,23.8,23.9,23.9,24.8,25.9,24.9,27.2,27.2,27.2,28.1,28.5,28.9,29.8,30.8,30.4,30.9,30.0,30.8,30.7,31.0,28.1,27.7,27.4,27.5,27.3,25.5,24.0,25.1,24.5,22.9,26.9,27.3,27.8,27.3,26.9,27.0,28.2,28.7,29.3,29.8,29.6,29.8,29.7,26.6,27.8,28.9,29.4,29.5,28.3,27.5,25.3,25.9,26.9,27.1,27.7,26.1,22.3,21.3,24.0,24.7,24.0,24.9,24.9,24.6,25.9,25.4,23.3,22.7,22.4,21.6,21.1,21.8,24.2,23.2,24.1,23.0,22.0,20.5,19.1,19.2,19.9,18.8,22.1,22.6,22.7,22.5,22.7,22.5,21.6,21.7,22.1,22.0,21.4,20.3,21.0,20.5,18.2,16.9,12.4,12.2,14.0,15.3,15.2,14.7,13.9,10.9,9.8,9.9,10.8,12.8,13.7,11.6,7.9,11.3,12.2,12.5,13.7,13.6,13.8,10.2,9.0,9.4,10.5,9.6,10.0,10.8,8.2,5.2,6.0,8.1,8.2,7.3,8.6,12.4,8.7,7.4,7.0,6.1,6.6,11.4,8.4,4.5,0.4,1.5,1.3,2.6,8.3,6.9,4.2,5.8,8.3,3.6,4.4,3.7,4.0,5.4,6.2,3.1,6.8,9.8,2.3,0.8,5.3,5.8,0.6,-4.0,-0.9,3.8,5.6,1.9,-1.3,-4.0,-3.9,-1.1,1.8,1.3,-0.3,1.4,-1.5,1.2,4.3,-2.9,-1.0,1.7,1.3,8.0,4.2,3.4,3.9,0.6,-3.9,-4.0,-4.7,-1.4,-0.7,-1.7,-2.5,-0.5,-2.0,-1.3,-2.5,-1.5,-0.1,-1.1,-0.1,2.4,5.5,-0.9,-4.0,-6.0,-1.0,0.4,2.9,2.0,3.8,6.3,5.4,2.0,1.5,2.3,1.8,5.1,9.9,9.7,4.5,2.5,5.2,6.9,8.2,8.0,8.6,6.8,8.4,6.3,7.7,3.8,1.6,1.6,2.5,2.7,3.8,5.7,6.7,5.9,6.3,5.8,8.7,8.2,6.3,6.3,6.8,8.9,10.1,11.4,11.4,11.4,12.1,12.1,13.1,12.8,13.5,12.4,10.3,12.9,12.3,10.5,12.3,7.9,8.7,12.9,12.1,12.4,14.6,17.7,16.7,16.2,17.0,14.0,17.9,17.6,13.6,12.1,11.8,16.1,15.7,16.5,15.6,16.2,13.5,14.0,14.7,15.2,16.2,14.1,13.1,13.0,15.8,16.7,14.9,15.0,17.5,19.9,17.7,19.3,22.2,22.8,22.7,23.2,23.8,22.4,18.6,18.5,19.7,18.8,20.9,22.7,23.2,23.1,20.7,20.4,20.8,23.8,24.3,22.0,23.1,22.6,20.4,21.6,23.7,20.2,21.7,22.1,22.1,22.3,23.9,24.9,25.4,26.0,25.5,26.3,24.8,22.8,23.6,21.5,22.2,22.3,23.0,23.6,25.8,25.0,25.7,26.4,22.5,23.7,23.9,24.0,24.0,25.3,27.1,25.8,25.2,27.3,28.0,28.6,28.3,27.9,27.0,26.3,26.8,26.7,26.3,26.9,28.6,28.3,28.8,29.4,30.1,30.5,30.7,30.0,30.1,29.6,30.0,31.5,31.5,32.7,32.8,29.9,31.0,32.8,31.3,30.7,30.1,29.3,27.9,28.4,27.7,27.0,25.1,26.0,27.2,25.9,27.3,26.2,28.3,28.6,29.0,29.6,30.6,28.1,26.7,26.2,25.8,26.7,26.6,26.1,26.7,25.7,23.7,24.0,23.9,24.4,23.7,22.0,23.0,23.4,23.6,22.9,22.5,23.7,23.5,24.8,24.3,24.3,24.2,24.3,23.7,23.5,23.2,20.5,21.7,21.4,20.6,21.8,18.8,17.3,18.7,20.7,18.4,17.0,17.6,18.1,18.9,20.3,22.0,23.9,20.3,15.7,15.3,18.3,20.5,21.8,18.4,15.9,15.5,12.2,14.2,16.1,17.5,18.9,14.6,9.6,9.5,13.4,13.2,10.2,12.1,10.8,11.5,13.1,10.8,7.4,7.3,8.6,7.7,9.6,11.3,13.1,14.6,13.8,11.6,11.8,10.8,6.3,8.0,9.1,11.7,5.4,6.2,8.4,8.8],"부산":[17.4,21.2,22.4,17.8,16.2,14.2,15.4,16.7,17.8,19.0,18.7,18.2,19.5,19.9,18.4,19.9,21.0,20.9,20.5,21.7,22.8,21.4,23.3,24.2,21.9,20.4,21.4,22.8,22.5,22.2,23.4,24.0,23.3,23.2,21.7,23.2,20.4,22.0,22.9,24.9,25.9,26.4,26.8,27.1,28.9,29.2,28.4,28.6,29.4,30.4,29.1,27.7,27.2,26.3,25.9,26.2,23.9,23.5,24.4,25.1,24.0,24.2,26.8,26.8,27.7,27.9,27.4,28.3,29.1,29.6,29.8,29.1,28.8,28.9,28.9,29.5,28.5,28.0,28.0,28.1,28.7,26.2,24.4,23.5,23.7,22.3,26.4,27.3,28.4,28.6,28.1,27.8,28.0,28.1,28.9,29.4,30.0,29.5,29.1,28.6,27.7,27.9,28.8,29.8,26.4,25.9,26.5,25.9,26.7,26.6,26.9,28.2,26.8,22.9,23.2,23.9,24.2,25.1,24.3,25.8,26.4,26.6,22.7,22.2,23.6,21.0,21.2,21.6,24.2,23.1,23.5,22.5,22.7,21.2,19.6,20.8,20.8,19.1,21.6,21.9,21.0,22.3,21.9,20.6,20.6,21.7,20.8,20.4,18.9,20.5,20.8,20.3,20.2,17.6,16.0,14.8,16.0,16.2,15.6,16.6,14.5,10.0,7.9,9.4,12.0,13.1,12.6,11.2,9.3,12.6,12.6,13.8,14.5,15.3,14.4,9.8,8.8,10.6,10.9,9.8,9.4,10.6,7.8,3.2,3.1,5.8,6.7,6.5,6.8,10.1,7.7,7.6,8.8,5.0,4.9,11.8,10.0,5.4,0.4,-0.7,0.8,1.3,6.5,6.2,2.5,3.4,8.0,4.9,7.5,3.0,2.2,3.6,6.4,3.5,7.0,10.9,3.4,2.1,4.8,7.2,1.9,-4.9,-1.5,1.6,5.5,2.7,-1.3,-3.8,-4.3,-2.3,0.9,1.7,-0.1,1.7,-2.5,-0.9,6.1,-2.3,-2.0,3.7,0.5,9.4,6.7,5.8,5.8,3.2,-0.6,-4.0,-4.8,-2.1,-0.8,-1.5,-1.0,0.4,-1.4,-0.8,-2.6,-0.6,-0.9,-1.5,-0.3,3.0,5.0,4.0,-1.0,-4.9,-1.2,0.5,3.7,3.2,3.7,7.3,9.3,6.3,6.2,4.4,4.4,6.5,9.1,14.0,5.9,3.6,7.5,8.8,7.3,6.3,8.3,7.5,7.4,6.5,7.2,7.1,2.7,3.0,4.3,3.8,5.3,6.0,5.1,5.9,7.7,8.2,9.0,8.8,8.6,8.7,10.0,9.9,10.6,10.6,10.4,11.6,14.0,13.8,12.9,13.2,13.3,11.7,12.8,13.4,14.5,12.2,14.1,9.8,9.4,12.4,16.9,14.5,14.9,16.2,14.7,15.3,13.5,14.0,16.6,17.6,17.2,13.9,13.5,13.2,13.6,14.9,16.3,17.5,17.4,14.4,14.0,14.4,16.9,14.8,14.6,14.0,15.2,17.2,18.1,16.0,16.7,18.0,17.1,18.2,18.8,18.8,20.6,23.1,22.5,22.0,17.0,18.2,17.9,17.2,18.5,22.1,22.4,20.1,22.9,21.1,22.8,24.2,23.5,20.1,21.8,21.2,22.9,21.1,21.5,19.7,19.6,21.5,22.1,22.8,23.4,23.2,23.2,23.3,24.6,25.2,24.4,23.9,22.2,19.7,19.6,19.7,22.0,21.2,20.5,20.6,21.5,22.2,20.4,21.7,22.5,22.9,23.1,25.0,25.4,25.4,25.8,26.8,28.6,28.4,27.9,27.2,28.3,28.9,28.3,27.7,28.0,28.0,28.7,29.7,29.5,30.0,30.3,31.1,31.0,32.4,33.8,33.2,33.0,34.1,33.4,31.5,30.4,29.2,29.2,30.3,29.6,26.9,26.1,25.2,25.6,25.9,26.5,26.6,23.6,24.2,25.7,27.1,27.3,26.9,27.3,28.4,28.8,28.9,28.9,27.1,25.3,26.9,26.2,26.9,26.7,26.8,25.4,25.1,25.1,25.2,24.6,23.7,22.4,22.0,22.9,23.1,25.1,25.1,23.4,22.9,23.5,22.1,23.2,22.7,22.5,22.4,22.0,22.7,22.3,19.1,20.8,21.8,21.3,21.0,20.3,17.5,18.2,19.4,18.7,17.3,17.3,17.8,18.3,21.2,21.6,22.2,20.8,16.0,14.6,17.1,19.1,21.5,20.8,17.2,16.4,11.7,15.3,17.3,18.1,17.6,14.1,10.1,10.7,14.2,13.5,11.0,12.7,11.2,11.8,13.6,10.9,6.5,8.6,9.9,10.3,11.6,12.9,12.9,13.0,13.6,12.2,13.2,12.5,4.6,7.7,7.7,12.5,5.1,4.9,8.2,10.4]}};
-  var WX = { city: "서울", cache: {} };
-  function todayUTC() { var n = new Date(); return utc(n.getFullYear(), n.getMonth() + 1, n.getDate()); }
-  function isoD(t) { return new Date(t).toISOString().slice(0, 10); }
-  function wWin(now) { var w0 = monday(now) - 25 * WEEK; return { w0: w0, wLast: monday(now) + 2 * WEEK, ly0: w0 - 364 * DAY }; }
-  function snapFor(city) {
-    if (!WSNAP || !WSNAP.cities[city]) return null;
-    var s0 = parseDate(WSNAP.start), map = {};
-    WSNAP.cities[city].forEach(function (v, i) { if (v != null) map[s0 + i * DAY] = v; });
-    return { map: map, now: parseDate(WSNAP.asof), live: false };
-  }
-  function fetchCity(city) {
-    var c = CITIES[city], now = todayUTC(), win = wWin(now);
-    var base = "latitude=" + c[0] + "&longitude=" + c[1] + "&daily=temperature_2m_mean&timezone=Asia%2FSeoul";
-    var get = function (u) { return fetch(u).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }); };
-    return Promise.all([
-      get("https://api.open-meteo.com/v1/forecast?" + base + "&past_days=10&forecast_days=16"),
-      get("https://archive-api.open-meteo.com/v1/archive?" + base + "&start_date=" + isoD(win.ly0) + "&end_date=" + isoD(now - DAY))
-    ]).then(function (res) {
-      var map = {};
-      res.forEach(function (j) {   // 예보 먼저, 관측(재분석)으로 덮어씀
-        if (!j.daily) throw new Error(j.reason || "자료 없음");
-        j.daily.time.forEach(function (d, i) { var v = j.daily.temperature_2m_mean[i]; if (v != null) map[parseDate(d)] = v; });
-      });
-      return { map: map, now: now, live: true };
-    });
-  }
-  function weekly(src) {
-    var now = src.now, win = wWin(now), rows = [];
-    for (var t = win.w0; t <= win.wLast; t += WEEK) {
-      var cur = [], ly = [], fc = 0;
-      for (var k = 0; k < 7; k++) {
-        var d = t + k * DAY;
-        if (src.map[d] != null) { cur.push(src.map[d]); if (d > now) fc++; }
-        if (src.map[d - 364 * DAY] != null) ly.push(src.map[d - 364 * DAY]);
-      }
-      rows.push({ t: t, cur: cur.length >= 4 ? mean(cur) : null, ly: ly.length >= 4 ? mean(ly) : null, fc: fc > 0, done: t + 6 * DAY < now });
-    }
-    return rows;
-  }
-  function firstBelow(rows, key, th) {   // 가을 들어 처음으로 주평균이 기준 아래로 내려간 주
-    var peak = -1;
-    rows.forEach(function (r, i) { if (r[key] != null && (peak < 0 || r[key] > rows[peak][key])) peak = i; });
-    for (var i = Math.max(peak, 0); i < rows.length; i++) if (rows[i][key] != null && rows[i][key] < th) return i;
-    return -1;
-  }
-  function chartWeather(rows) {
-    var W = 920, Ht = 250, L = 44, R = 14, T = 16, B = 30, n = rows.length;
-    var svg = U.svgEl(W, Ht, WX.city + " 주평균 기온 금년과 전년 비교");
-    var vals = [];
-    rows.forEach(function (r) { if (r.cur != null) vals.push(r.cur); if (r.ly != null) vals.push(r.ly); });
-    var lo = Math.min(0, Math.min.apply(null, vals)), hi = Math.max.apply(null, vals);
-    var yt = U.niceTicks(Math.floor(lo), Math.ceil(hi), 5), y0 = yt[0], y1 = yt[yt.length - 1];
-    var step = (W - L - R) / Math.max(1, n - 1);
-    var X = function (i) { return L + i * step; }, Y = function (v) { return T + (Ht - T - B) * (y1 - v) / (y1 - y0 || 1); };
-    var fi = rows.findIndex(function (r) { return r.fc; });
-    if (fi >= 0) {
-      U.add(svg, "rect", { x: X(fi - 0.5), y: T, width: W - R - X(fi - 0.5), height: Ht - T - B, fill: "var(--accent-soft)", opacity: 0.55 });
-      U.add(svg, "text", { x: X(fi - 0.5) + 6, y: T + 12, style: "fill:var(--accent);font-weight:600" }, "예보 포함");
-    }
-    yt.forEach(function (t) {
-      U.add(svg, "line", { x1: L, x2: W - R, y1: Y(t), y2: Y(t), class: "axis", "stroke-width": t === 0 ? 1.2 : 0.6 });
-      U.add(svg, "text", { x: L - 6, y: Y(t) + 4, "text-anchor": "end" }, t + "°");
-    });
-    if (10 > y0 && 10 < y1) {
-      U.add(svg, "line", { x1: L, x2: W - R, y1: Y(10), y2: Y(10), stroke: "var(--warn)", "stroke-dasharray": "3 4", "stroke-width": 1.2 });
-      U.add(svg, "text", { x: W - R - 4, y: Y(10) - 5, "text-anchor": "end", style: "fill:var(--warn);font-weight:600" }, "10°C");
-    }
-    rows.forEach(function (r, i) { if (i % 4 === 0 || i === n - 1) U.add(svg, "text", { x: X(i), y: Ht - 10, "text-anchor": "middle" }, fmtD(r.t)); });
-    var path = function (key, from, to) { var p = ""; for (var i = from; i <= to; i++) { var v = rows[i][key]; if (v == null) continue; p += (p ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); } return p; };
-    var lastActual = fi >= 0 ? fi - 1 : n - 1;
-    U.add(svg, "path", { d: path("ly", 0, n - 1), fill: "none", stroke: "var(--muted)", "stroke-width": 1.4, "stroke-dasharray": "2 3", opacity: 0.85 });
-    U.add(svg, "path", { d: path("cur", 0, lastActual), fill: "none", stroke: "var(--accent)", "stroke-width": 2.2 });
-    if (fi >= 0) U.add(svg, "path", { d: path("cur", Math.max(0, fi - 1), n - 1), fill: "none", stroke: "var(--accent)", "stroke-width": 2.2, "stroke-dasharray": "6 4" });
-    var g = U.add(svg, "g", { visibility: "hidden", style: "pointer-events:none" });
-    var vl = U.add(g, "line", { y1: T, y2: Ht - B, stroke: "var(--muted)", "stroke-width": 1 });
-    var box = U.add(g, "rect", { rx: 5, fill: "var(--surface)", stroke: "var(--line)", width: 168 });
-    var tx = U.add(g, "text", { style: "fill:var(--ink);font-size:11.5px" });
-    var ov = U.add(svg, "rect", { x: L, y: T, width: W - L - R, height: Ht - T - B, fill: "transparent" });
-    ov.addEventListener("pointermove", function (e) {
-      var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
-      var p = pt.matrixTransform(svg.getScreenCTM().inverse());
-      var i = Math.max(0, Math.min(n - 1, Math.round((p.x - L) / step))), r = rows[i];
-      var lines = [fmtFull(r.t) + " 주" + (r.fc ? " (예보 포함)" : ""), "금년 " + (r.cur != null ? r.cur.toFixed(1) + "°C" : "—"), "전년 " + (r.ly != null ? r.ly.toFixed(1) + "°C" : "—")];
-      if (r.cur != null && r.ly != null) lines.push("차이 " + (r.cur - r.ly > 0 ? "+" : "") + (r.cur - r.ly).toFixed(1) + "°C");
-      g.setAttribute("visibility", "visible");
-      vl.setAttribute("x1", X(i)); vl.setAttribute("x2", X(i));
-      var bx = X(i) + 180 > W - R ? X(i) - 180 : X(i) + 12;
-      box.setAttribute("x", bx); box.setAttribute("y", T + 4); box.setAttribute("height", lines.length * 16 + 10);
-      tx.textContent = "";
-      lines.forEach(function (ln, j) { U.add(tx, "tspan", { x: bx + 9, y: T + 21 + j * 16, style: j === 0 ? "font-weight:600" : "" }, ln); });
-    });
-    ov.addEventListener("pointerleave", function () { g.setAttribute("visibility", "hidden"); });
-    return svg;
-  }
-  function deg(v) { return v == null || !isFinite(v) ? "—" : v.toFixed(1) + "°C"; }
-  function sdeg(v) { return v == null || !isFinite(v) ? "—" : (v > 0 ? "+" : "") + v.toFixed(1) + "°C"; }
-  function renderWeather(src) {
-    var rows = weekly(src);
-    var done = rows.filter(function (r) { return r.done && r.cur != null && r.ly != null; }).slice(-4);
-    var ahead = rows.filter(function (r) { return !r.done && r.cur != null && r.ly != null; });
-    var c4 = mean(done.map(function (r) { return r.cur; })), l4 = mean(done.map(function (r) { return r.ly; }));
-    var ca = mean(ahead.map(function (r) { return r.cur; })), la = mean(ahead.map(function (r) { return r.ly; }));
-    var bc = firstBelow(rows, "cur", 10), bl = firstBelow(rows, "ly", 10);
-    var gap = bc >= 0 && bl >= 0 ? bc - bl : null;
-    var d4 = c4 - l4;
-    $("w-desc").textContent = WX.city + " 기준, 최근 4주 주평균 기온은 " + (Math.abs(d4) < 1 ? "전년과 비슷합니다(" + sdeg(d4) + ")" : "전년보다 " + Math.abs(d4).toFixed(1) + "°C " + (d4 > 0 ? "높습니다" : "낮습니다")) + ". " +
-      (gap == null ? "" : "주평균이 처음 10°C 아래로 내려간 주는 금년 " + fmtD(rows[bc].t) + " 주" + (rows[bc].fc ? "(예보)" : "") + ", 전년은 " + fmtD(rows[bl].t) + " 주(올해 달력 기준)로 " +
-        (gap === 0 ? "같은 시기입니다." : "올해가 " + Math.abs(gap) + "주 " + (gap > 0 ? "늦습니다." : "빠릅니다."))) +
-      " 기온이 높으면 아우터 수요가 늦게 오고, 낮으면 빨리 옵니다.";
-    $("w-facts").innerHTML = [
-      ["최근 4주 금년 / 전년", deg(c4) + " / " + deg(l4), "차이 " + sdeg(d4)],
-      ["이번 주~2주 예보 / 전년", deg(ca) + " / " + deg(la), "차이 " + sdeg(ca - la)],
-      ["10°C 아래 첫 주 (금년)", bc >= 0 ? fmtD(rows[bc].t) + " 주" : "아직", "주평균 기온 기준"],
-      ["10°C 아래 첫 주 (전년)", bl >= 0 ? fmtD(rows[bl].t) + " 주" : "—", "올해 달력의 같은 주로 표시"]
-    ].map(function (f) { return '<div class="fact"><b>' + f[1] + "</b><span>" + f[0] + "<br>" + f[2] + "</span></div>"; }).join("");
-    var c = $("w-chart"); c.innerHTML = ""; c.appendChild(chartWeather(rows));
-    $("w-src").textContent = (src.live ? "자료: Open-Meteo 기상 재분석·예보 (실시간 조회, 일평균 기온의 주 평균). " :
-      "실시간 조회가 안 돼 " + fmtFull(src.now) + " 기준 저장 자료를 표시합니다 (Open-Meteo 기상 재분석·예보). ") + "전년 같은 주 = 364일 전(같은 요일) 기준. 최근 26주 + 예보 2주.";
-  }
-  function loadWeather(city) {
-    WX.city = city;
-    var snap = snapFor(city);
-    if (WX.cache[city]) return renderWeather(WX.cache[city]);
-    if (snap) renderWeather(snap);
-    fetchCity(city).then(function (src) { WX.cache[city] = src; if (WX.city === city) renderWeather(src); })
-      .catch(function () { if (!snap) { $("w-desc").textContent = "기온 데이터를 불러오지 못했습니다. 인터넷 연결을 확인하세요."; $("w-facts").innerHTML = ""; $("w-chart").innerHTML = ""; } });
-  }
-  $("w-city").innerHTML = Object.keys(CITIES).map(function (k) { return "<option>" + k + "</option>"; }).join("");
-  $("w-city").addEventListener("change", function (e) { loadWeather(e.target.value); });
+  function useDemo() { S.idx = demo(); S.demo = true; S.src = ""; S.sel = null; msg(""); loadWeather(WX.city); }
 
   // ---------- 탭과 ② 연결
   function showTab(which) {
@@ -1243,14 +1180,14 @@ details.card li { margin-bottom: 6px }
   }
   var prevGrowth = null;
   function hideBanner() { $("link-banner").hidden = true; prevGrowth = null; }
-  $("t-apply").addEventListener("click", function () {
-    var r = selRow(); if (!r || !isFinite(r.weekly)) return;
+  function applyToReorder(r) {
+    if (!r || !isFinite(r.weekly)) return;
     var g = $("growth");
     if (prevGrowth == null) prevGrowth = g.value;
     g.value = (r.weekly * 100).toFixed(1);
     g.dispatchEvent(new Event("input", { bubbles: true }));
     var b = $("link-banner");
-    b.innerHTML = "<span>주간 판매 변화율 <b>" + sp(r.weekly, 1) + "</b>를 ① 판매추이의 <b>" + U.esc(r.name) + "</b> 예측(" + (S.demo ? "가상 데이터, " : "") + "향후 " + S.H +
+    b.innerHTML = "<span>주간 판매 변화율 <b>" + sp(r.weekly, 1) + "</b>를 ① 판매추이의 <b>" + esc(r.name) + "</b> 예측(" + (S.demo ? "가상 데이터, " : "") + "향후 " + S.H +
       "주)에서 가져왔습니다. 남은 시즌(주)이 예측 기간과 크게 다르면 예측 기간을 맞춰 다시 가져오세요.</span>";
     var undo = document.createElement("button");
     undo.type = "button"; undo.className = "ghost"; undo.textContent = "원래 값(" + prevGrowth + "%)으로 되돌리기";
@@ -1259,7 +1196,13 @@ details.card li { margin-bottom: 6px }
     b.hidden = false;
     showTab("reorder");
     window.scrollTo(0, 0);
+  }
+  $("t-apply").addEventListener("click", function () { applyToReorder(selRow()); });
+  $("wk-act").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-n]"); if (!b) return;
+    S.sel = b.getAttribute("data-n"); render(); applyToReorder(selRow());
   });
+  $("wk-data").addEventListener("click", function () { $("t-data").scrollIntoView({ block: "start", behavior: "smooth" }); });
   $("preset").addEventListener("change", hideBanner);
   ["trend", "reorder"].forEach(function (k) { $("tb-" + k).addEventListener("click", function () { showTab(k); }); });
   document.querySelector(".tabs").addEventListener("keydown", function (e) {
@@ -1273,18 +1216,17 @@ details.card li { margin-bottom: 6px }
     var tr = e.target.closest("tr[data-n]"); if (!tr) return;
     e.preventDefault(); select(tr.getAttribute("data-n"));
   });
-  $("t-minis").addEventListener("click", function (e) { var b = e.target.closest(".mini"); if (b) { select(b.dataset.n); $("t-d-title").scrollIntoView({ block: "start", behavior: "smooth" }); } });
   $("t-h").addEventListener("input", function (e) { S.H = +e.target.value; render(); });
   $("t-demo").addEventListener("click", useDemo);
-  $("f-index").addEventListener("change", function (e) { readInput(e.target, onIndex); });
-  $("f-sales").addEventListener("change", function (e) { readInput(e.target, onSales); });
+  $("f-index").addEventListener("change", function (e) { readInput(e.target); });
+  $("w-city").innerHTML = Object.keys(CITIES).map(function (k) { return "<option>" + k + "</option>"; }).join("");
+  $("w-city").addEventListener("change", function (e) { loadWeather(e.target.value); });
 
   useDemo();
-  loadWeather("서울");
   var saved = null;
   try { saved = localStorage.getItem("md-board-tab"); } catch (e) { /* 저장 불가 환경 */ }
   showTab(saved === "reorder" ? "reorder" : "trend");
-  window.__trend = { onIndex: onIndex, onSales: onSales, state: S, forecast: forecast, parseWide: parseWide, parseLong: parseLong, parseCSV: parseCSV };
+  window.__trend = { onIndex: onIndex, state: S, forecast: forecast, parseWide: parseWide, parseCSV: parseCSV };
 })();
 </script>
 </body>
